@@ -7,7 +7,6 @@ admin.site.register(Family)
 admin.site.register(Cohort)
 admin.site.register(Individual)
 admin.site.register(ReferencePopulation)
-admin.site.register(ProjectPhenotype)
 admin.site.register(UserProfile)
 
 admin.site.register(FamilySearchFlag)

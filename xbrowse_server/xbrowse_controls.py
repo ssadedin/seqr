@@ -12,9 +12,7 @@ reload_variants() -> kwargs family, project
 
 """
 
-import os
 import gzip
-import shutil
 import vcf
 
 from datetime import datetime, date
@@ -22,7 +20,6 @@ from django.conf import settings
 from xbrowse_server import mall
 
 from xbrowse_server.base.models import Project, Individual, Family, Cohort
-from xbrowse import genomeloc
 from xbrowse_server.mall import get_mall, get_cnv_store, get_coverage_store, get_project_datastore
 
 

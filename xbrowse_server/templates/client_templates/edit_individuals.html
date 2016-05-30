@@ -18,10 +18,6 @@
             <th style="width:80px;">Gender</th>
             <th style="width:80px;">Affected</th>
 
-            <% _.each(project_phenotypes, function(p) { %>
-            <th class="project-phenotype" style="width:80px;"><%= p.name %></th>
-            <% }); %>
-
        </tr>
     </thead>
 
@@ -99,21 +95,6 @@
                 </select>
             </td>
 
-            <% _.each(project_phenotypes, function(p) { %>
-            <td>
-                <% if (p.datatype == 'bool' ) { %>
-                <select
-                    class="table-input"
-                    data-key="<%= p.slug %>"
-                    data-indiv="<%= indiv.indiv_id %>" >
-                    <option value="U" <% if (indiv.phenotypes[p.slug] == null) { %>selected="selected"<% } %> > -- </option>
-                    <option value="T" <% if (indiv.phenotypes[p.slug] == true) { %>selected="selected"<% } %> >Yes</option>
-                    <option value="F" <% if (indiv.phenotypes[p.slug] == false) { %>selected="selected"<% } %> >No</option>
-                </select>
-                <% } %>
-            </td>
-            <% }); %>
-
         </tr>
 	
     <% }); %>
@@ -190,66 +171,6 @@
     </div>
 
 </script>
-
-<script type="text/template" id="tpl-add-phenotype">
-
-<div class="modal-header">
-    <button type="button" class="close" data-dismiss="modal">×</button>
-    <h3>Add A Phenotype</h3>
-</div>
-<div class="modal-body">
-    <p>
-        This allows you to add a new phenotype to a project.
-        It doesn't assign this phenotype to any individuals - that comes later.
-        This page will refresh after the file is uploaded, so make sure your other changes are saved.
-    </p>
-
-    <form class="form-horizontal" id="add-phenotype-form">
-
-        <div class="control-group">
-            <label class="control-label" for="id_name" >Name of phenotype</label>
-            <div class="controls">
-                <input type="text" id="id_name" name="name" placeholder="Name">
-            </div>
-        </div>
-
-        <div class="control-group">
-            <label class="control-label" for="id_name" >Category</label>
-            <div class="controls">
-                <label class="radio">
-                    <input type="radio" name="category" value="disease" /> Disease
-                </label>
-                <label class="radio">
-                    <input type="radio" name="category" value="clinical_observation" /> Clinical Observation
-                </label>
-                <label class="radio">
-                    <input type="radio" name="category" value="other" /> Other
-                </label>
-            </div>
-        </div>
-
-        <div class="control-group">
-            <label class="control-label" for="id_name" >Data type</label>
-            <div class="controls">
-                <label class="radio">
-                    <input type="radio" name="datatype" value="bool" /> Boolean (patient either has or doesn't)
-                </label>
-                <label class="radio">
-                    <input type="radio" name="datatype" value="category" disabled="true" /> Category
-                </label>
-                <label class="radio">
-                    <input type="radio" name="datatype" value="number" disabled="true" /> Number
-                </label>
-            </div>
-        </div>
-
-        <a id="add-phenotype-submit" class="btn btn-primary">Add Phenotype</a>
-
-    </form>
-</div>
-
-</script>
-
 
 <script type="text/template" id="tpl-add-cohort-form">
     <h3>Add A Cohort</h3>
@@ -347,100 +268,6 @@
 </div>
 
 </script>
-
-<script type="text/template" id="tpl-apply-phenotype">
-
-<div class="modal-header">
-    <button type="button" class="close" data-dismiss="modal">×</button>
-    <h3 id="myModalLabel">Apply Phenotype</h3>
-</div>
-<div class="modal-body">
-    <p>Choose a phenotype and a value below, and it will apply to the following <%= selected_samples.length %> samples:</p>
-    <ul class="edit-modal-samples-list" >
-        <% for (var i=0; i < selected_samples.length; i++) { %>
-        <li><%= selected_samples[i] %></li>
-        <% } %>
-    </ul>
-
-    <p>Note that you can only choose boolean phenotypes. Use "Load phenotypes from file" to import numeric phenotypes. </p>
-
-    <p>This will <strong>not</strong> save anything, so you might want to hit "Save All" right after this. </p>
-
-    <div class="form-horizontal">
-        <div class="control-group">
-            <label class="control-label" for="id_name" >Phenotype</label>
-            <div class="controls">
-                <select name="" id="apply-phenotype-select">
-                    <% _.each(project_phenotypes, function(p) { %>
-                    <option value="<%= p.slug %>"><%= p.name %></option>
-                    <% }); %>
-                </select>
-            </div>
-        </div>
-        <div class="control-group">
-            <label class="control-label" for="id_name" >Phenotype</label>
-            <div class="controls">
-                <select name="" id="apply-phenotype-bool-value">
-                    <option value="T" >Yes</option>
-                    <option value="F" >No</option>
-                    <option value="U" >-- No value --</option>
-                </select>
-            </div>
-        </div>
-        <div class="control-group">
-            <div class="controls">
-                <a id="apply-phenotype-submit" class="btn btn-primary">Apply</a>
-            </div>
-        </div>
-   </div>
-</div>
-
-</script>
-
-
-<script type="text/template" id="tpl-select-with-phenotype">
-
-<div class="modal-header">
-    <button type="button" class="close" data-dismiss="modal">×</button>
-    <h3 id="myModalLabel">Select with phenotype</h3>
-</div>
-<div class="modal-body">
-
-    <p>Choose a phenotype and a value below, and samples with that phenotype will be selected. </p>
-
-    <div class="form-horizontal">
-        <div class="control-group">
-            <label class="control-label" for="id_name" >Phenotype</label>
-            <div class="controls">
-                <select name="" id="select-with-phenotype-select">
-                    <% _.each(project_phenotypes, function(p) { %>
-                    <option value="<%= p.slug %>"><%= p.name %></option>
-                    <% }); %>
-                </select>
-            </div>
-        </div>
-        <div class="control-group">
-            <label class="control-label" for="id_name" >Phenotype</label>
-            <div class="controls">
-                <select name="" id="select-with-phenotype-bool-value">
-                    <option value="T" >Yes</option>
-                    <option value="F" >No</option>
-                    <option value="U" >-- No value --</option>
-                </select>
-            </div>
-        </div>
-        <div class="control-group">
-            <div class="controls">
-                <a id="select-with-phenotype-submit" class="btn btn-primary">Select These Samples</a>
-            </div>
-        </div>
-    </div>
-
-
-</div>
-
-</script>
-
 
 
 

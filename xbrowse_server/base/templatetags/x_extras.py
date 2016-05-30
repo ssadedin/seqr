@@ -9,11 +9,7 @@ key = register.filter('key', key)
 def forindex(a, index):
     return a[index]
 
-def phenotype(individual, slug):
-    return individual.phenotype_display(slug)
-
 forindex = register.filter('forindex', forindex)
-phenotype = register.filter('phenotype', phenotype)
 
 
 # from http://www.sprklab.com/notes/13-passing-arguments-to-functions-in-django-template

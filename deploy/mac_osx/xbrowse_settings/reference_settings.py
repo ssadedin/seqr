@@ -35,4 +35,3 @@ gene_tags = [
 gtex_expression_file = os.path.join(xbrowse_reference_data_dir, 'RPKM_GeneLevel_September.gct')
 gtex_samples_file = os.path.join(xbrowse_reference_data_dir, 'gtex_samples.txt')
 
-has_phenotype_data = False

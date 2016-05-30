@@ -9,27 +9,9 @@ window.Individual = Backbone.Model.extend({
         maternal_id: "",
         paternal_id: "",
         other_notes: "",
-        phenotypes: {},
 
     },
 
-    get_phenotype: function(slug) {
-        if (this.get('phenotypes')[slug] == undefined) {
-            return null;
-        } else {
-            return this.get('phenotypes')[slug];
-        }
-    },
-
-    set_bool_phenotype: function(slug, value) {
-        if (value == 'T') {
-            this.get('phenotypes')[slug] = true;
-        } else if (value == 'F') {
-            this.get('phenotypes')[slug] = false;
-        } else {
-            this.get('phenotypes')[slug] = null;
-        }
-    },
 
 });
 

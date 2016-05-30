@@ -5,10 +5,7 @@ from django.core.management.base import BaseCommand
 from optparse import make_option
 from django.contrib.auth.models import User
 from xbrowse_server.base.models import Project, ProjectCollaborator, Project, \
-    Family, FamilyImageSlide, Cohort, Individual, \
-    FamilySearchFlag, ProjectPhenotype, IndividualPhenotype, FamilyGroup, \
-    CausalVariant, ProjectTag, VariantTag, VariantNote, ReferencePopulation, \
-    UserProfile, VCFFile, ProjectGeneList
+    Family, Individual, FamilyGroup, CausalVariant, ProjectTag, VariantTag, VariantNote, ProjectGeneList
 from xbrowse_server.gene_lists.models import GeneList, GeneListItem
 
 from django.core import serializers
@@ -38,8 +35,6 @@ class Command(BaseCommand):
         ProjectTag => Project
         VariantTag => ProjectTag, Family
         VariantNote => User, Project
-        IndividualPhenotype => Individual, ProjectPhenotype
-        ProjectPhenotype => Project
         """
 
         # Project

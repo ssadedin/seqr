@@ -3,14 +3,9 @@ import datetime
 import gzip
 import json
 import random
-
-import uuid
-
 from django.conf import settings
-from django.contrib import admin
 from django.contrib.auth.models import User
 from django.db import models
-from django.db.models.signals import post_save
 from django.utils import timezone
 from pretty_times import pretty
 from xbrowse import Cohort as XCohort
@@ -21,18 +16,6 @@ from xbrowse import vcf_stuff
 from xbrowse.core.variant_filters import get_default_variant_filters
 from xbrowse_server.mall import get_datastore, get_coverage_store
 
-
-
-PHENOTYPE_CATEGORIES = (
-    ('disease', 'Disease'),
-    ('clinial_observation', 'Clinical Observation'),
-    ('other', 'Other'),
-)
-
-PHENOTYPE_DATATYPES = (
-    ('bool', 'Boolean'),
-    ('number', 'Number'),
-)
 
 
 class UserProfile(models.Model):
@@ -278,7 +261,6 @@ class Project(models.Model):
             [{'slug': s['slug'], 'name': s['name']} for s in settings.ANNOTATOR_REFERENCE_POPULATIONS] +
             [{'slug': s.slug, 'name': s.name} for s in self.private_reference_populations.all()]
         )
-        d['phenotypes'] = [p.toJSON() for p in self.get_phenotypes()]
 
         d['tags'] = [t.toJSON() for t in self.get_tags()]
         # this is an egrigious hack because get_default_variant_filters returns something other than VariantFilter objects
@@ -288,12 +270,6 @@ class Project(models.Model):
         d['default_variant_filters'] = filters
         return json.dumps(d)
 
-    def get_phenotypes(self):
-        return self.projectphenotype_set.all()
-
-    def get_project_phenotypes_json(self):
-        d = [phenotype.toJSON() for phenotype in self.get_phenotypes()]
-        return json.dumps(d)
 
     def get_gene_lists(self):
         return list(self.gene_lists.all())
@@ -377,7 +353,7 @@ class Family(models.Model):
 
     project = models.ForeignKey(Project, null=True, blank=True)
     family_id = models.CharField(max_length=140, default="", blank=True)
-    family_name = models.CharField(max_length=140, default="", blank=True)  # what is the difference between family name and id?
+    family_name = models.CharField(max_length=140, default="", blank=True)  # human-readable family name
 
     short_description = models.CharField(max_length=500, default="", blank=True)
 
@@ -440,7 +416,6 @@ class Family(models.Model):
             'about_family_content': self.about_family_content,
             'analysis_summary_content': self.analysis_summary_content,
             'analysis_status': self.get_analysis_status_json(),
-            'phenotypes': list({p.name for p in ProjectPhenotype.objects.filter(individualphenotype__individual__family=self, individualphenotype__boolean_val=True)}),
         }
 
     def get_json(self):
@@ -543,9 +518,6 @@ class Family(models.Model):
     def num_causal_variants(self):
         return CausalVariant.objects.filter(family=self).count()
     
-
-    def get_phenotypes(self):
-        return list(set(ProjectPhenotype.objects.filter(individualphenotype__individual__family=self, individualphenotype__boolean_val=True)))
 
     def has_aff_and_unaff(self):
         """
@@ -754,9 +726,6 @@ class Individual(models.Model):
     def affected_status_display(self):  # TODO: rename this to affected_display...that was dumb
         return dict(AFFECTED_CHOICES).get(self.affected, '')
 
-    def phenotypes(self):
-        return [t.phenotype_slug for t in self.individualphenotypetag_set.all()]
-
     def to_dict(self):
         """
 
@@ -771,7 +740,6 @@ class Individual(models.Model):
             'maternal_id': str(self.maternal_id),
             'paternal_id': str(self.paternal_id),
             'has_variants': self.has_variant_data(),  # can we remove?
-            'phenotypes': self.get_phenotype_dict(),
             'other_notes': self.other_notes,
         }
 
@@ -845,25 +813,6 @@ class Individual(models.Model):
         """
         return self.cohort_set.all()
 
-    def get_phenotypes(self):
-        return [i for i in self.individualphenotype_set.all() if i.val() is not None]
-
-    def get_phenotype_dict(self):
-        return {p.phenotype.slug: p.val() for p in self.get_phenotypes()}
-
-    def phenotype_display(self, slug):
-        pk = int(slug[6:])
-        iphenotype = self.individualphenotype_set.filter(phenotype__pk=pk)
-        if len(iphenotype) == 0:
-            return ""
-        iphenotype = iphenotype[0]
-        if iphenotype.phenotype.datatype == 'bool':
-            if iphenotype.boolean_val is True:
-                return 'True'
-            elif iphenotype.boolean_val is False:
-                return 'False'
-            else:
-                return '.'
 
     def sample_display(self):
         if self.vcf_files.count() == 0:
@@ -899,6 +848,8 @@ FLAG_TYPE_CHOICES = (
     ('R', 'Flag for review'),
     ('N', 'Other note'),
 )
+
+
 
 
 class FamilySearchFlag(models.Model):
@@ -943,43 +894,6 @@ class FamilySearchFlag(models.Model):
     def x_variant(self):
         v = get_datastore(self.family.project.project_id).get_single_variant(self.family.project.project_id, self.family.family_id, self.xpos, self.ref, self.alt)
         return v
-
-
-class ProjectPhenotype(models.Model):
-
-    project = models.ForeignKey(Project)
-    slug = models.SlugField(max_length=140, default="pheno")
-    name = models.CharField(max_length=140, default="")
-    category = models.CharField(choices=PHENOTYPE_CATEGORIES, max_length=20)
-    datatype = models.CharField(choices=PHENOTYPE_DATATYPES, max_length=20)
-
-    def __unicode__(self):
-        return "{} in {}".format(self.name, self.project)
-
-    def toJSON(self):
-        return {
-            'slug': self.slug,
-            'name': self.name,
-            'category': self.category,
-            'datatype': self.datatype,
-        }
-
-
-class IndividualPhenotype(models.Model):
-
-    individual = models.ForeignKey(Individual)
-    phenotype = models.ForeignKey(ProjectPhenotype)
-    boolean_val = models.NullBooleanField()
-    float_val = models.FloatField(null=True, blank=True)
-
-    def slug(self):
-        return self.phenotype.slug
-
-    def val(self):
-        if self.phenotype.datatype == 'bool':
-            return self.boolean_val
-        elif self.phenotype.datatype == 'number':
-            return self.float_val
 
 
 class FamilyGroup(models.Model):

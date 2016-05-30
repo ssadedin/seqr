@@ -8,11 +8,8 @@ window.IndividualListTable = Backbone.View.extend({
 
     // templates for the different modal views
     delete_samples_template: _.template($('#tpl-delete-samples').html()),
-    add_phenotype_template: _.template($('#tpl-add-phenotype').html()),
     add_individuals_template: _.template($('#tpl-add-individuals').html()),
     select_from_list_template: _.template($('#tpl-select-from-list').html()),
-    apply_phenotype_template: _.template($('#tpl-apply-phenotype').html()),
-    select_with_phenotype_template: _.template($('#tpl-select-with-phenotype').html()),
 
     events: {
         "click #select-all-individuals": "select_all",
@@ -21,11 +18,8 @@ window.IndividualListTable = Backbone.View.extend({
         "click .save-one-individual": "save_one_individual",
         "click #import-from-fam": "import_from_fam",
         "click #delete-selected-samples": "delete_selected_samples",
-        "click #add-phenotype": "add_phenotype",
         "click #add-individuals": "add_individuals",
         "click #select-from-list": "select_from_list",
-        "click #apply-phenotype": "apply_phenotype",
-        "click #select-with-phenotype": "select_with_phenotype",
     },
 
     render: function() {
@@ -33,7 +27,6 @@ window.IndividualListTable = Backbone.View.extend({
         $(this.el).html(this.template({
             project_id: this.options.project_id,
             individuals: this.collection.toJSON(),
-            project_phenotypes: this.options.project_phenotypes,
         }));
 
         return this;
@@ -75,13 +68,6 @@ window.IndividualListTable = Backbone.View.extend({
         // affected
         m.set('affected', form_fields.filter('[data-key="affected"]').val());
 
-        // phenotypes
-        _.each(that.options.project_phenotypes, function(p) {
-            var el = form_fields.filter('[data-key="' + p.slug + '"]');
-            if (p.datatype == 'bool') {
-                m.set_bool_phenotype(p.slug, $(el).val());
-            }
-        });
     },
 
     get_selected_samples: function() {
@@ -106,30 +92,6 @@ window.IndividualListTable = Backbone.View.extend({
         this.$('#base-modal-container').modal();
     },
 
-    add_phenotype: function() {
-        var that = this;
-        this.$('#modal-inner').html(that.add_phenotype_template({
-            project_id: that.options.project_id,
-        }));
-        this.$('#base-modal-container').modal();
-        this.$('#add-phenotype-submit').click(function() {
-            var postdata = {};
-            var formdata = $('#add-phenotype-form').serializeArray();
-            for (var i=0; i<formdata.length; i++) {
-                postdata[formdata[i].name] = formdata[i].value;
-            }
-            $.post(URL_PREFIX + 'project/' + that.options.project_id + '/add-phenotype',
-                postdata,
-                function(data) {
-                    if (data.is_error) {
-                        alert('Error: ' + data.error);
-                    } else {
-                        window.location.reload();
-                    }
-                }
-            );
-        });
-    },
 
 //    create_cohort: function() {
 //        var that = this;
@@ -237,46 +199,7 @@ window.IndividualListTable = Backbone.View.extend({
         });
     },
 
-    apply_phenotype: function() {
-        var that = this;
-        var selected_samples = that.get_selected_samples();
-        this.$('#modal-inner').html(that.apply_phenotype_template({
-            project_phenotypes: that.options.project_phenotypes,
-            selected_samples: selected_samples,
-        }));
-        this.$('#base-modal-container').modal();
-        this.$('#apply-phenotype-submit').click(function() {
-            var slug = $('#apply-phenotype-select').val();
-            var val = $('#apply-phenotype-bool-value').val();
-            _.each(selected_samples, function(indiv_id) {
-                var indiv = that.collection.find(function(x) { return x.get('indiv_id') == indiv_id; })
-                indiv.set_bool_phenotype(slug, val);
-            });
-            that.close_modal();
-            that.render();
-        });
-    },
 
-    select_with_phenotype: function() {
-        var that = this;
-        this.$('#modal-inner').html(that.select_with_phenotype_template({
-            project_phenotypes: that.options.project_phenotypes,
-        }));
-        this.$('#base-modal-container').modal();
-        this.$('#select-with-phenotype-submit').click(function() {
-            var slug = $('#select-with-phenotype-select').val();
-            var val = $('#select-with-phenotype-bool-value').val();
-            var bool_val = null;
-            if (val == 'T') bool_val = true;
-            if (val == 'F') bool_val = false;
-            that.collection.each(function(indiv) {
-                if (indiv.get_phenotype(slug) == bool_val) {
-                    that.set_id_selected(indiv.get('indiv_id'));
-                }
-            });
-            that.close_modal();
-        });
-    },
 
     select_all: function(e) {
         var checked = $(e.target).is(':checked');

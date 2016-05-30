@@ -16,9 +16,8 @@ from django.contrib.auth.models import User
 from django.contrib import messages
 from xbrowse_server.mall import get_project_datastore
 from xbrowse_server.analysis.project import get_knockouts_in_gene
-from xbrowse_server.base.forms import FAMFileForm, AddPhenotypeForm, AddFamilyGroupForm, AddTagForm
-from xbrowse_server.base.models import Project, Individual, Family, FamilyGroup, ProjectCollaborator, ProjectPhenotype, \
-    VariantNote, ProjectTag
+from xbrowse_server.base.forms import FAMFileForm, AddFamilyGroupForm, AddTagForm
+from xbrowse_server.base.models import Project, Individual, Family, FamilyGroup, ProjectCollaborator, ProjectTag
 from xbrowse_server import sample_management, json_displays
 from xbrowse_server import server_utils
 from xbrowse_server.base.utils import get_collaborators_for_user
@@ -307,35 +306,6 @@ def delete_individuals(request, project_id):
         return redirect('edit_individuals', project.project_id)
 
 
-@login_required
-@csrf_exempt
-def add_phenotype(request, project_id):
-
-    error = None
-
-    project = get_object_or_404(Project, project_id=project_id)
-    if not project.can_admin(request.user):
-        raise PermissionDenied
-
-    form = AddPhenotypeForm(project, request.POST)
-    if form.is_valid():
-        phenotype = ProjectPhenotype(
-            project=project,
-            slug=form.cleaned_data['slug'],
-            name=form.cleaned_data['name'],
-            category=form.cleaned_data['category'],
-            datatype=form.cleaned_data['datatype'],
-        )
-        phenotype.save()
-        return redirect('edit_individuals', project.project_id)
-    else:
-        error = server_utils.form_error_string(form)
-
-    if error:
-        return server_utils.JSONResponse({'is_error': True, 'error': error})
-    else:
-        return redirect('edit_individuals', project.project_id)
-
 
 # todo: move this to an api_utils area
 def save_individual_from_json_dict(project, indiv_dict):
@@ -347,7 +317,6 @@ def save_individual_from_json_dict(project, indiv_dict):
     individual.maternal_id = indiv_dict.get('maternal_id', '')
     individual.save()
     sample_management.set_family_id_for_individual(individual, indiv_dict.get('family_id', ''))
-    sample_management.set_individual_phenotypes_from_dict(individual, indiv_dict.get('phenotypes', {}))
 
 
 @csrf_exempt

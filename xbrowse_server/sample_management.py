@@ -1,6 +1,6 @@
 from django.conf import settings
 
-from xbrowse_server.base.models import Project, Family, Individual, Cohort, ProjectPhenotype, IndividualPhenotype, FamilyGroup
+from xbrowse_server.base.models import Project, Family, Individual, Cohort, FamilyGroup
 from xbrowse import fam_stuff
 from xbrowse_server.mall import get_mall, get_project_datastore
 from xbrowse.utils import slugify
@@ -43,27 +43,6 @@ def set_parents_for_individual(individual):
         mother.family = individual.family
         mother.save()
 
-
-def set_individual_phenotypes_from_dict(individual, phenotype_dict):
-    """
-    Set the phenotypes for this indiviudal from dict
-    Deletes all current phenotypes and rebuilds from phenotype_dict
-    """
-
-    for p in individual.get_phenotypes():
-        p.delete()
-
-    for phenotype_slug, value in phenotype_dict.items():
-        project_phenotype = ProjectPhenotype.objects.get(slug=phenotype_slug, project=individual.project)
-        indiv_phenotype = IndividualPhenotype.objects.create(
-            individual=individual,
-            phenotype=project_phenotype
-        )
-        if project_phenotype.datatype == 'bool':
-            indiv_phenotype.boolean_val = value
-        elif project_phenotype.datatype == 'number':
-            indiv_phenotype.float_val = value
-        indiv_phenotype.save()
 
 
 def update_project_from_fam(project, fam_file):

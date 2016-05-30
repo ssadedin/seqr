@@ -4,7 +4,7 @@ from django.contrib.auth import authenticate
 from django.utils.text import slugify
 from django.contrib.auth.models import User
 
-from xbrowse_server.base.models import Family, Individual, ANALYSIS_STATUS_CHOICES, COLLABORATOR_TYPES, ProjectPhenotype, FamilyGroup, Cohort
+from xbrowse_server.base.models import Family, Individual, ANALYSIS_STATUS_CHOICES, COLLABORATOR_TYPES, FamilyGroup, Cohort
 from xbrowse.parsers.fam_stuff import get_individuals_from_fam_file
 
 
@@ -114,25 +114,6 @@ class FAMFileForm(forms.Form):
     def clean(self):
         data = self.cleaned_data
         data['individuals'] = get_individuals_from_fam_file(self.cleaned_data['fam_file'])
-        return data
-
-
-class AddPhenotypeForm(forms.Form):
-
-    name = forms.CharField(max_length=100)
-    category = forms.CharField(max_length=30)
-    datatype = forms.CharField(max_length=30)
-
-    # takes a project
-    def __init__(self, project, *args, **kwargs):
-        super(AddPhenotypeForm, self).__init__(*args, **kwargs)
-        self.project = project
-
-    def clean(self):
-        data = self.cleaned_data
-        data['slug'] = slugify(self.cleaned_data['name'])
-        if ProjectPhenotype.objects.filter(slug=data['slug'], project=self.project).exists():
-            raise forms.ValidationError('A phenotype with this name already exists')
         return data
 
 

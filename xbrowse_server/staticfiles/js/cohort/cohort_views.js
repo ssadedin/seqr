@@ -1,7 +1,6 @@
 var AddCohortView = Backbone.View.extend({
     template: _.template($('#tpl-add-cohort').html()),
     form_template: _.template($('#tpl-add-cohort-form').html()),
-    select_with_phenotype_template: _.template($('#tpl-select-individuals-with-phenotype').html()),
     select_from_list_template: _.template($('#tpl-select-from-indiv-id-list').html()),
     initialize: function(options) {
         this.project_spec = options.project_spec;
@@ -9,7 +8,6 @@ var AddCohortView = Backbone.View.extend({
     },
     events: {
         "click #add-cohort-submit": "add_cohort_submit",
-        "click #select-with-phenotype": "select_with_phenotype",
         "click #select-from-list": "select_from_list",
     },
     render: function() {
@@ -56,21 +54,6 @@ var AddCohortView = Backbone.View.extend({
             );
         });
         this.$('#modal-base').modal();
-    },
-
-    select_with_phenotype: function() {
-        var that = this;
-        var phenotype_view = new SelectPhenotypeView({
-            project_spec: that.project_spec,
-        });
-        this.$('#base-modal-container').html(this.select_with_phenotype_template());
-        this.$('.select-phenotype-container').html(phenotype_view.render().el)
-        this.$('#base-modal-container').modal();
-        this.$('#select-with-phenotype-submit').click(function() {
-            var pheno_filter = phenotype_view.get_filter();
-            that.indivs_view.select_with_phenotype(pheno_filter);
-            that.close_modal();
-        });
     },
 
 

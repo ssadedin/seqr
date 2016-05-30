@@ -27,7 +27,6 @@
 <script type="text/javascript">
     var PROJECT_ID = '{{ project.project_id }}';
     var INDIVIDUALS = {{ individuals_json|safe }};
-    var PROJECT_PHENOTYPES = {{ project.get_project_phenotypes_json|safe }};
 </script>
 
 <script type='text/javascript' src='{% static "js/project_editing/models.js" %}'></script>

@@ -1,7 +1,6 @@
 var AddFamilyGroupView = Backbone.View.extend({
     template: _.template($('#tpl-add-family-group').html()),
     form_template: _.template($('#tpl-add-family-group-dialog').html()),
-    select_with_phenotype_template: _.template($('#tpl-select-families-with-phenotype').html()),
     select_from_list_template: _.template($('#tpl-select-from-family-id-list').html()),
     initialize: function(options) {
         this.project_spec = options.project_spec;
@@ -9,7 +8,6 @@ var AddFamilyGroupView = Backbone.View.extend({
     },
     events: {
         "click #add-family-group-submit": "add_family_group_submit",
-        "click #select-with-phenotype": "select_with_phenotype",
         "click #select-from-list": "select_from_list",
     },
     render: function() {
@@ -59,20 +57,6 @@ var AddFamilyGroupView = Backbone.View.extend({
         this.$('#base-modal-container').modal();
     },
 
-    select_with_phenotype: function() {
-        var that = this;
-        var phenotype_view = new SelectPhenotypeView({
-            project_spec: that.project_spec,
-        });
-        this.$('#modal-inner').html(this.select_with_phenotype_template());
-        this.$('.select-phenotype-container').html(phenotype_view.render().el)
-        this.$('#base-modal-container').modal();
-        this.$('#select-with-phenotype-submit').click(function() {
-            var pheno_filter = phenotype_view.get_filter();
-            that.families_view.select_with_phenotype(pheno_filter);
-            that.close_modal();
-        });
-    },
 
 
     select_from_list: function() {

@@ -1,7 +1,6 @@
 from django.core.exceptions import ObjectDoesNotExist
 
-from xbrowse_server.base.models import Individual, Family, Cohort, ProjectPhenotype, IndividualPhenotype, FamilySearchFlag, ProjectGeneList, \
-    VariantNote, VariantTag, ProjectTag
+from xbrowse_server.base.models import Individual, Family, Cohort, ProjectGeneList, VariantNote, VariantTag, ProjectTag
 from xbrowse_server import sample_management
 
 
@@ -34,16 +33,6 @@ def copy_project(from_project, to_project, samples=False, settings=False, upsert
         for r in from_project.get_private_reference_populations():
             to_project.private_reference_populations.add(r)
 
-        # phenotypes
-        for from_p in from_project.get_phenotypes():
-            to_p = ProjectPhenotype.objects.get_or_create(
-                project=to_project,
-                slug=from_p.slug,
-                category=from_p.category,
-                datatype=from_p.datatype,
-                name=from_p.name,
-            )[0]
-
     # collaborators
     if users:
         managers = from_project.get_managers()
@@ -59,7 +48,7 @@ def copy_project(from_project, to_project, samples=False, settings=False, upsert
     #
 
     if samples:
-        # individuals with phenotypes
+        # individuals
         for from_individual in from_project.individual_set.all():
             if upsert:
                 to_individual = Individual.objects.get_or_create(indiv_id=from_individual.indiv_id, project=to_project)[0]
@@ -83,22 +72,7 @@ def copy_project(from_project, to_project, samples=False, settings=False, upsert
                 for vcf in from_individual.vcf_files.all():
                     to_individual.vcf_files.add(vcf)
 
-            # individual phenotypes
-            for from_phenotype in from_individual.get_phenotypes():
 
-                # project phenotype should already exist
-                project_phenotype = ProjectPhenotype.objects.get(project=to_project,
-                    slug=from_phenotype.phenotype.slug,
-                    category=from_phenotype.phenotype.category,
-                    datatype=from_phenotype.phenotype.datatype
-                )
-                individual_phenotype = IndividualPhenotype.objects.get_or_create(
-                    phenotype=project_phenotype,
-                    individual=to_individual
-                )[0]
-                individual_phenotype.boolean_val = from_phenotype.boolean_val
-                individual_phenotype.float_val = from_phenotype.float_val
-                individual_phenotype.save()
 
             if from_individual.family:
                 sample_management.set_family_id_for_individual(to_individual, from_individual.family.family_id)

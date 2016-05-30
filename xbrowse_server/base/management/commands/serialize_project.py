@@ -6,7 +6,7 @@ from optparse import make_option
 from django.contrib.auth.models import User
 from xbrowse_server.base.models import Project, ProjectCollaborator, Project, \
     Family, FamilyImageSlide, Cohort, Individual, \
-    FamilySearchFlag, ProjectPhenotype, IndividualPhenotype, FamilyGroup, \
+    FamilySearchFlag, FamilyGroup, \
     CausalVariant, ProjectTag, VariantTag, VariantNote, ReferencePopulation, \
     UserProfile, VCFFile, ProjectGeneList
 from xbrowse_server.gene_lists.models import GeneList, GeneListItem
@@ -43,8 +43,6 @@ class Command(BaseCommand):
         ProjectTag => Project
         VariantTag => ProjectTag, Family
         VariantNote => User, Project
-        IndividualPhenotype => Individual, ProjectPhenotype
-        ProjectPhenotype => Project
         """
         output_obj = []
 
@@ -112,20 +110,14 @@ class Command(BaseCommand):
         variant_notes = list(VariantNote.objects.filter(project=project, ))
         output_obj += variant_notes
 
-        # ProjectPhenotype
-        project_phenotypes = list(ProjectPhenotype.objects.filter(project=project,))
-        output_obj += project_phenotypes
 
-        # IndividualPhenotype, VCFFiles
-        individual_phenotypes = []
+        # VCFFiles
         vcf_files = []
         for individual in individuals:
             vcf_files.extend(list(individual.vcf_files.all()))
             #individual.bam_files.all()
 
-            individual_phenotypes.extend(
-                list(IndividualPhenotype.objects.filter(individual=individual)))
-        output_obj += individual_phenotypes
+
         output_obj += vcf_files
 
         # ReferencePopulation
@@ -187,7 +179,6 @@ class Command(BaseCommand):
         cohorts = {}
         individuals = {}
         project_tags = {}
-        project_phenotypes = {}
         gene_lists = {}
         with open(json_path) as f:
             contents = f.read()
@@ -405,12 +396,6 @@ class Command(BaseCommand):
 
                     family_search_flag.search_spec_json = obj_fields['search_spec_json']
                     family_search_flag.save()
-
-                elif obj_model == "base.projectphenotype":
-                    project_phenotypes[obj_pk] = None
-                    print("WARNING: base.projectphenotype not implemented. Won't deserialize " + str(obj_fields))
-                elif obj_model == "base.individualphenotype":
-                    print("WARNING: base.individualphenotype not implemented. Won't deserialize " + str(obj_fields))
                 else:
                     raise ValueError("Unexpected obj_model: " + obj_model)
 

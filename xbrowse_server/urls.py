@@ -63,7 +63,6 @@ urlpatterns = [
     url(r'^project/(?P<project_id>[\w.|-]+)/save-one-individual', xbrowse_server.base.views.save_one_individual, name='save_one_individual'),
     url(r'^project/(?P<project_id>[\w.|-]+)/update-project-from-fam', xbrowse_server.base.views.update_project_from_fam, name='update_project_from_fam'),
     url(r'^project/(?P<project_id>[\w.|-]+)/delete-individuals', xbrowse_server.base.views.delete_individuals, name='delete_individuals'),
-    url(r'^project/(?P<project_id>[\w.|-]+)/add-phenotype', xbrowse_server.base.views.add_phenotype, name='add_phenotype'),
     url(r'^project/(?P<project_id>[\w.|-]+)/add-individuals', xbrowse_server.base.views.add_individuals, name='add_individuals'),
 
     url(r'^project/(?P<project_id>[\w.|-]+)/edit-basic-info$', xbrowse_server.base.views.project_views.edit_basic_info, name='edit_basic_info'),

@@ -1,18 +1,11 @@
 import datetime
-import imp
 import pymongo
 import sys
-import argparse
 from xbrowse import Variant
-from vep_annotations import HackedVEPAnnotator
 from population_frequency_store import PopulationFrequencyStore
 from xbrowse.annotation import vep_annotations
 from xbrowse.core import constants
-from xbrowse.parsers import vcf_stuff
-from xbrowse.utils import compressed_file
-from xbrowse_server.xbrowse_annotation_controls import CustomAnnotator
 import vcf
-import re
 
 class VariantAnnotator():
 
@@ -21,13 +14,6 @@ class VariantAnnotator():
         self._population_frequency_store = PopulationFrequencyStore(
             db_conn=self._db,
             reference_populations=settings_module.reference_populations,
-        )
-        self._vep_annotator = HackedVEPAnnotator(
-            vep_perl_path=settings_module.vep_perl_path,
-            vep_cache_dir=settings_module.vep_cache_dir,
-            vep_batch_size=settings_module.vep_batch_size,
-            human_ancestor_fa=None,
-            #human_ancestor_fa=settings_module.human_ancestor_fa,
         )
         self._custom_annotator = custom_annotator
         self.reference_populations = settings_module.reference_populations
@@ -76,55 +62,6 @@ class VariantAnnotator():
                 freqs[p] = annotation['freqs'].get(p, 0.0)
             annotation['freqs'] = freqs
         return annotation
-
-    def add_variants_to_annotator(self, variant_t_list, force_all=False):
-        """
-        Make sure that all the variants in variant_t_list are in annotator
-        For the ones that are not, go through the whole load cycle
-        """
-        if force_all:
-            variants_to_add = variant_t_list
-        else:
-            variants_to_add = self._get_missing_annotations(variant_t_list)
-        custom_annotations = None
-        if self._custom_annotator:
-            print "Getting custom annotations..."
-            custom_annotations = self._custom_annotator.get_annotations_for_variants(variants_to_add)
-            print "...done"
-        for variant_t, vep_annotation in self._vep_annotator.get_vep_annotations_for_variants(variants_to_add):
-            annotation = {
-                'vep_annotation': vep_annotation,
-                'freqs': self._population_frequency_store.get_frequencies(variant_t[0], variant_t[1], variant_t[2]),
-            }
-            add_convenience_annotations(annotation)
-            if self._custom_annotator:
-                annotation.update(custom_annotations[variant_t])
-            self._db.variants.update({
-                'xpos': variant_t[0],
-                'ref': variant_t[1],
-                'alt': variant_t[2]
-            }, {'$set': {'annotation': annotation},
-            }, upsert=True)
-
-
-    def add_vcf_file_to_annotator(self, vcf_file_path, force_all=False):
-        """
-        Add the variants in vcf_file_path to annotator
-        Convenience wrapper around add_variants_to_annotator
-        """
-        if not force_all and self._db.vcf_files.find_one({'vcf_file_path': vcf_file_path}):
-            print "VCF already annotated"
-            return
-        print "Scanning VCF file first..."
-        variant_t_list = []
-        for variant_t in vcf_stuff.iterate_tuples(compressed_file(vcf_file_path)):
-            variant_t_list.append(variant_t)
-            if len(variant_t_list) == 100000:
-                print "Adding another 100000 variants, through {}".format(variant_t_list[-1][0])
-                self.add_variants_to_annotator(variant_t_list, force_all)
-                variant_t_list = []
-        self.add_variants_to_annotator(variant_t_list, force_all)
-        self._db.vcf_files.insert({'vcf_file_path': vcf_file_path, 'date_added': datetime.datetime.utcnow()})
 
     def add_preannotated_vcf_file(self, vcf_file_path, force=False):
         """
@@ -232,29 +169,3 @@ def add_convenience_annotations(annotation):
     if worst_vep_annotation:
         annotation['vep_group'] = constants.ANNOTATION_GROUP_REVERSE_MAP[annotation['vep_consequence']]
 
-
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument('command')
-    parser.add_argument('--settings')
-    parser.add_argument('--vcf_file_list')
-    parser.add_argument('--custom_annotator_settings')
-    args = parser.parse_args()
-    annotator_settings = imp.load_source(
-        'annotator_settings',
-        args.settings
-    )
-    custom_annotator = None
-    if args.custom_annotator_settings:
-        custom_annotator_settings = imp.load_source(
-            'custom_annotation_settings',
-            args.custom_annotator_settings
-        )
-        custom_annotator = CustomAnnotator(custom_annotator_settings)
-    annotator = VariantAnnotator(annotator_settings, custom_annotator=custom_annotator)
-    if args.command == 'load':
-        annotator.load()
-    if args.command == 'add_vcf_files':
-        vcf_file_paths = [l.strip() for l in open(args.vcf_file_list)]
-        for vcf_path in vcf_file_paths:
-            annotator.add_vcf_file_to_annotator(vcf_path)
