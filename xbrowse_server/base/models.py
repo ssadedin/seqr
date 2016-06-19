@@ -17,7 +17,6 @@ from xbrowse.core.variant_filters import get_default_variant_filters
 from xbrowse_server.mall import get_datastore, get_coverage_store
 
 
-
 class UserProfile(models.Model):
 
     user = models.OneToOneField(User)
@@ -39,7 +38,6 @@ User.profile = property(lambda u: UserProfile.objects.get_or_create(user=u)[0])
 class VCFFile(models.Model):
 
     file_path = models.CharField(max_length=500, default="", blank=True)
-    needs_reannotate = models.BooleanField(default=False)
 
     def __unicode__(self):
         return self.file_path
@@ -127,7 +125,6 @@ class Project(models.Model):
     collaborators = models.ManyToManyField(User, blank=True, through='ProjectCollaborator')
     is_public = models.BooleanField(default=False)
 
-
     def __unicode__(self):
         return self.project_name if self.project_name != "" else self.project_id
 
@@ -189,7 +186,7 @@ class Project(models.Model):
                 print("WARNING: couldn't retrieve User object for %s" % str(c))
         return result
 
-    # Data / samples
+    # data / samples
     def has_families(self):
         return self.family_set.filter().exists()
 
@@ -270,7 +267,6 @@ class Project(models.Model):
         d['default_variant_filters'] = filters
         return json.dumps(d)
 
-
     def get_gene_lists(self):
         return list(self.gene_lists.all())
 
@@ -293,10 +289,6 @@ class Project(models.Model):
             for vcf_file in indiv.get_vcf_files():
                 vcf_files.add(vcf_file)
         return vcf_files
-
-    def num_saved_variants(self):
-        search_flags = FamilySearchFlag.objects.filter(family__project=self)
-        return len({(v.xpos, v.ref, v.alt, v.family) for v in search_flags})
 
     def get_xfamilygroup(self, only_combined=True):
         """
@@ -511,13 +503,8 @@ class Family(models.Model):
     def is_loaded(self):
         return self.get_data_status() in ['loaded', 'no_variants']
 
-    def num_saved_variants(self):
-        search_flags = FamilySearchFlag.objects.filter(family=self)
-        return len({(v.xpos, v.ref, v.alt) for v in search_flags})
-
     def num_causal_variants(self):
         return CausalVariant.objects.filter(family=self).count()
-    
 
     def has_aff_and_unaff(self):
         """
@@ -653,33 +640,32 @@ class Cohort(models.Model):
         return self.get_data_status() in ['loaded', 'no_variants']
 
 
-GENDER_CHOICES = (
-    ('M', 'Male'),
-    ('F', 'Female'),
-    ('U', 'Unknown'),
-)
-
-
-AFFECTED_CHOICES = (
-    ('A', 'Affected'),
-    ('N', 'Unaffected'),
-    ('U', 'Unknown'),
-)
-
-
 class Individual(models.Model):
+    SEX_CHOICES = (
+        ('M', 'Male'),
+        ('F', 'Female'),
+        ('U', 'Unknown'),
+    )
+
+
+    AFFECTED_CHOICES = (
+        ('A', 'Affected'),
+        ('N', 'Unaffected'),
+        ('U', 'Unknown'),
+    )
+
     # global unique id for this individual (<date>_<time_with_millisec>_<indiv_id>)
     guid = models.SlugField(max_length=165, unique=True, db_index=True)
     indiv_id = models.SlugField(max_length=140, default="", blank=True, db_index=True)
     family = models.ForeignKey(Family, null=True, blank=True)
     project = models.ForeignKey(Project, null=True, blank=True)
 
-    nickname = models.CharField(max_length=140, default="", blank=True)
-    gender = models.CharField(max_length=1, choices=GENDER_CHOICES, default='U')
+    sex = models.CharField(max_length=1, choices=SEX_CHOICES, default='U')
     affected = models.CharField(max_length=1, choices=AFFECTED_CHOICES, default='U')
     maternal_id = models.SlugField(max_length=140, default="", blank=True)
     paternal_id = models.SlugField(max_length=140, default="", blank=True)
 
+    nickname = models.CharField(max_length=140, default="", blank=True)
     other_notes = models.TextField(default="", blank=True, null=True)
 
     coverage_file = models.CharField(max_length=200, default="", blank=True)
@@ -720,11 +706,11 @@ class Individual(models.Model):
     def has_read_data(self):
         return bool(self.bam_file_path)
 
-    def gender_display(self):
-        return dict(GENDER_CHOICES).get(self.gender, '')
+    def sex_display(self):
+        return dict(Individual.SEX_CHOICES).get(self.sex, '')
 
     def affected_status_display(self):  # TODO: rename this to affected_display...that was dumb
-        return dict(AFFECTED_CHOICES).get(self.affected, '')
+        return dict(Individual.AFFECTED_CHOICES).get(self.affected, '')
 
     def to_dict(self):
         """
@@ -735,7 +721,7 @@ class Individual(models.Model):
             'project_id': str(self.project.project_id),
             'family_id': str(self.family.family_id) if self.family else "",
             'nickname': str(self.nickname),
-            'gender': str(self.gender),
+            'sex': str(self.sex),
             'affected': str(self.affected),
             'maternal_id': str(self.maternal_id),
             'paternal_id': str(self.paternal_id),
@@ -747,7 +733,7 @@ class Individual(models.Model):
         return {
             'project_id': self.project.project_id,
             'indiv_id': self.indiv_id,
-            'gender': self.gender,
+            'sex': self.sex,
             'affected': self.affected,
             'nickname': self.nickname,
             'has_variant_data': self.has_variant_data(),
@@ -760,11 +746,11 @@ class Individual(models.Model):
 
     def xindividual(self):
 
-        gender = 'unknown'
-        if self.gender == 'M':
-            gender = 'male'
-        elif self.gender == 'F':
-            gender = 'female'
+        sex = 'unknown'
+        if self.sex == 'M':
+            sex = 'male'
+        elif self.sex == 'F':
+            sex = 'female'
 
         affected_status = 'unknown'
         if self.affected == 'A':
@@ -786,7 +772,7 @@ class Individual(models.Model):
             family_id=self.family_id,
             paternal_id=paternal_id,
             maternal_id=maternal_id,
-            gender=gender,
+            sex=sex,
             affected_status=affected_status
         )
 
@@ -798,7 +784,7 @@ class Individual(models.Model):
         self.paternal_id = xindividual.paternal_id
         self.maternal_id = xindividual.maternal_id
         self.affected = 'A' if xindividual.affected_status == 'affected' else ('N' if xindividual.affected_status == 'unaffected' else 'U')
-        self.gender = 'M' if xindividual.gender == 'male' else ('F' if xindividual.gender == 'female' else 'U')
+        self.sex = 'M' if xindividual.sex == 'male' else ('F' if xindividual.sex == 'female' else 'U')
         self.save()
 
     def get_vcf_files(self):
@@ -843,16 +829,57 @@ class Individual(models.Model):
         }
 
 
-FLAG_TYPE_CHOICES = (
-    ('C', 'Likely causal'),
-    ('R', 'Flag for review'),
-    ('N', 'Other note'),
-)
+class Dataset(models.Model):
+    """Parent class for dataset models"""
 
+    guid = models.SlugField(max_length=165, unique=True, db_index=True)
+    version = models.CharField(max_length=20, db_index=True)
+
+    added_date = models.DateTimeField(null=True, blank=True)
+    original_path = models.TextField(null=True, blank=True)  # file or url from which the data was loaded
+
+    SEQUENCING_TYPE_CHOICES = (
+        ('WES', 'Exome'),
+        ('WGS', 'Whole Genome'),
+    )
+
+    sequencing_type = models.CharField(max_length=3, choices=SEQUENCING_TYPE_CHOICES)
+
+
+class SequencedSampleInfo(models.Model):
+    """Sequenced sample information that's independent of sample version, but does depend on sequencing_type"""
+
+    STATUS_CHOICES = (
+        ('s', 'In Sequencing')  # not yet sequenced
+        ('i', 'Interim'),       # needs additional sequencing to reach expected (95x) coverage
+        ('a', 'Abandoned'),     # sample failed sequencing
+        ('c', 'Complete'),      # sample sequencing complete and achieved expected coverage
+    )
+
+    status = models.CharField(max_length=3, choices=STATUS_CHOICES, default='s')
+
+
+class VariantCallsetSample(models.Model):
+    """Variant callset sample. One record per sample in a callset."""
+
+    individual = models.ForeignKey('Individual')
+    sample_info = models.ForeignKey('SequencedSampleInfo')
+    variant_callset = models.ForeignKey('VariantCallset')
+
+
+class VariantCallset(Dataset):
+    """Represents a variant callset. One record per callset."""
+    individuals = models.ManyToManyField(Individual, through='VariantCallsetSample')
 
 
 
 class FamilySearchFlag(models.Model):
+
+    FLAG_TYPE_CHOICES = (
+        ('C', 'Likely causal'),
+        ('R', 'Flag for review'),
+        ('N', 'Other note'),
+    )
 
     user = models.ForeignKey(User, null=True, blank=True)
     family = models.ForeignKey(Family, null=True, blank=True)
@@ -882,7 +909,7 @@ class FamilySearchFlag(models.Model):
             'ref': self.ref,
             'alt': self.alt,
             'flag_type': self.flag_type,
-            'flag_type_display': dict(FLAG_TYPE_CHOICES).get(self.flag_type),
+            'flag_type_display': dict(FamilySearchFlag.FLAG_TYPE_CHOICES).get(self.flag_type),
             'search_spec_json': self.search_spec_json,
             'note': self.note,
             'date_saved': pretty.date(self.date_saved) if self.date_saved is not None else '',
