@@ -1,6 +1,6 @@
 from collections import OrderedDict
 
-GENDERS = (
+SEXES= (
     'male',
     'female',
     'unknown'
@@ -21,7 +21,7 @@ class Individual():
         self.family_id = kwargs.get('family_id', '.')
         self.paternal_id = kwargs.get('paternal_id', '.')
         self.maternal_id = kwargs.get('maternal_id', '.')
-        self.gender = kwargs.get('gender', '.')
+        self.sex = kwargs.get('sex', '.')
         self.affected_status = kwargs.get('affected_status', '.')
 
     def toJSON(self):
@@ -31,7 +31,7 @@ class Individual():
             'family_id': self.family_id,
             'paternal_id': self.paternal_id,
             'maternal_id': self.maternal_id,
-            'gender': self.gender,
+            'sex': self.sex,
             'affected_status': self.affected_status,
         }
 

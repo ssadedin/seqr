@@ -26,11 +26,11 @@ def get_individuals_from_fam_file(fam_file, project_id='.'):
             maternal_id = slugify(fields[3], separator='_')
             if maternal_id == "0": maternal_id = "."
 
-            gender = 'unknown'
+            sex = 'unknown'
             if fields[4] == '2' or fields[4] == 'F':
-                gender = 'female'
+                sex = 'female'
             elif fields[4] == '1' or fields[4] == 'M':
-                gender = 'male'
+                sex = 'male'
 
             affected_status = 'unknown'
             if fields[5] == '2':
@@ -46,7 +46,7 @@ def get_individuals_from_fam_file(fam_file, project_id='.'):
             family_id=family_id,
             paternal_id=paternal_id,
             maternal_id=maternal_id,
-            gender=gender,
+            sex=sex,
             affected_status=affected_status,
         )
         individuals.append(indiv)
@@ -77,7 +77,7 @@ def validate_fam_file(fam_file):
             indiv_to_mat_id[i.indiv_id] = i.maternal_id
         if i.paternal_id and i.paternal_id != '.':
             indiv_to_pat_id[i.indiv_id] = i.paternal_id
-        indiv_to_sex[i.indiv_id] = i.gender
+        indiv_to_sex[i.indiv_id] = i.sex
 
     print("Validating %d individuals in %d families" % (len(indiv_to_family_id), len(set(indiv_to_family_id.values()))))
 
@@ -134,15 +134,15 @@ def write_individuals_to_ped_file(fam_file, individuals):
     if not individuals:
         return
 
-    gender_map = {"M": "1", "F": "2", "U": "unknown"}
+    sex_map = {"M": "1", "F": "2", "U": "unknown"}
     affected_map = {"A": "2", "N": "1", "U": "unknown"}
 
     fam_file.write("# project id: %s\n" % individuals[0].project.project_id)
-    fam_file.write("# %s\n" % "\t".join(["family", "individual", "paternal_id", "maternal_id", "gender", "affected"]))
+    fam_file.write("# %s\n" % "\t".join(["family", "individual", "paternal_id", "maternal_id", "sex", "affected"]))
     for i in sorted(individuals, key=lambda i: i.family_id):
         family_id = i.family.family_id if i.family else "unknown"
-        gender = gender_map[i.gender]
+        sex = sex_map[i.sex]
         affected = affected_map[i.affected]
-        fields = [family_id, i.indiv_id, i.paternal_id or ".", i.maternal_id or ".", gender, affected]
+        fields = [family_id, i.indiv_id, i.paternal_id or ".", i.maternal_id or ".", sex, affected]
         fam_file.write("\t".join(fields) + "\n")
 

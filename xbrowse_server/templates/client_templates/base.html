@@ -127,7 +127,7 @@
                 <% _.each(family.individuals, function(indiv) { if (!indiv.has_variant_data) return; %>
                 <tr>
                     <td><%= indiv.indiv_id %><% if (indiv.nickname) print(' (' + indiv.nickname + ')') %></td>
-                    <td data-indiv_id="<% indiv.indiv_id %>"><%= { 'M': 'Male', 'F': 'Female', 'U' : 'Unknown' }[indiv.gender] %></td>
+                    <td data-indiv_id="<% indiv.indiv_id %>"><%= { 'M': 'Male', 'F': 'Female', 'U' : 'Unknown' }[indiv.sex] %></td>
                     <td data-indiv_id="<% indiv.indiv_id %>"><%= { 'A': 'Affected', 'N': 'Unaffected', 'U' : 'Unknown' }[indiv.affected] %></td>
                     <td>
                         <select class="col-md-2 select-genotype form-control" data-indiv_id="<%= indiv.indiv_id %>">

@@ -1,9 +1,6 @@
-from optparse import make_option
 import sys
-import os
 from django.core.management.base import BaseCommand
 from xbrowse_server.reports.utilities import fetch_project_individuals_data
-import json
 import time
 import datetime
 #Note: this require pypl tool lib: reportlab (pip install reportlab)
@@ -107,14 +104,14 @@ class Command(BaseCommand):
       story.append(Paragraph(para, styles["section_title_text"]))       
       story.append(Spacer(1, 12))
       
-      table_data=[['Family ID','Status','Individual ID','Gender','Affected status','Phenotypes entry count']]
+      table_data=[['Family ID','Status','Individual ID','Sex','Affected status','Phenotypes entry count']]
       
       for family_id,variant_data in variant_data.iteritems():
         for individual in variant_data['individuals']:
           table_data.append([variant_data['family_id'],
                              family_statuses[variant_data['family_id']],
                              individual['indiv_id'],
-                             individual['gender'],
+                             individual['sex'],
                              individual['affected'],
                              phenotype_entry_counts[individual['indiv_id']]['count']
                              ])

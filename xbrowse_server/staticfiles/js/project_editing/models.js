@@ -4,7 +4,7 @@ window.Individual = Backbone.Model.extend({
         indiv_id: "",
         family_id: "",
         nickname: "",
-        gender: 'U',
+        sex: 'U',
         affected: 'U',
         maternal_id: "",
         paternal_id: "",

@@ -15,6 +15,6 @@ class Command(BaseCommand):
                     individual.indiv_id,
                     individual.paternal_id if individual.paternal_id else '.',
                     individual.maternal_id if individual.paternal_id else '.',
-                    '2' if individual.gender == 'F' else ('1' if individual.gender == 'M' else '.'),
+                    '2' if individual.sex == 'F' else ('1' if individual.sex == 'M' else '.'),
                     '2' if individual.affected == 'A' else ('1' if individual.affected == 'N' else '.'),
             ])

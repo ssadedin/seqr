@@ -9,8 +9,6 @@ from django.core.management.base import BaseCommand
 from django.core.files import File
 
 from xbrowse_server.base.models import Project, Individual
-
-from optparse import make_option
 import os
 
 
@@ -21,22 +19,22 @@ def run(s):
 
 placeholder_indiv_counter = 0
 
-def create_placeholder_indiv(family, gender):
+def create_placeholder_indiv(family, sex):
     """Utility function for creating an individual for whom data is not available.
     Args:
-        gender: 'M' or 'F'
+        sex: 'M' or 'F'
     Returns:
-        Individual model instance 
+        Individual model instance
     """
     global placeholder_indiv_counter
-    assert gender in ('M', 'F'), "Unexpected gender value: '%s'" % str(gender)
+    assert sex in ('M', 'F'), "Unexpected sex value: '%s'" % str(sex)
 
     placeholder_indiv_counter += 1
 
     i = Individual()
     i.indiv_id = 'dummy_%d' % placeholder_indiv_counter  # fake indiv id
     i.family = family
-    i.gender = gender
+    i.sex = sex
     i.paternal_id = ''
     i.maternal_id == ''
     i.affected = 'INVISIBLE'  # use a special value to tell HaploPainter that this indiv should be drawn as '?'
@@ -116,16 +114,16 @@ class Command(BaseCommand):
                     individuals_in_family.append(father)
 
                 with open(family_id + ".ped", "w") as f:
-                    gender_map = {"M": "1", "F": "2", "U": "0"}
+                    sex_map = {"M": "1", "F": "2", "U": "0"}
                     # HaploPainter1.043.pl has been modified to hide individuals with affected-status='9'
                     affected_map = {"A": "2", "N": "1", "U": "0", "INVISIBLE": "9"} 
                 
-                    f.write("# %s\n" % "\t".join(["family", "individual", "paternal_id", "maternal_id", "gender", "affected"]))
+                    f.write("# %s\n" % "\t".join(["family", "individual", "paternal_id", "maternal_id", "sex", "affected"]))
                     for i in individuals_in_family:
                         family_id = i.family.family_id if i.family else "unknown"
-                        gender = gender_map[i.gender]
+                        sex = sex_map[i.sex]
                         affected = affected_map[i.affected]
-                        fields = [family_id, i.indiv_id, i.paternal_id or '0', i.maternal_id or '0', gender, affected]
+                        fields = [family_id, i.indiv_id, i.paternal_id or '0', i.maternal_id or '0', sex, affected]
                         #print(fields)
                         f.write("\t".join(fields) + "\n")
                     
@@ -134,7 +132,7 @@ class Command(BaseCommand):
 
                 if not os.path.isfile(family_id+'.png'):
                     for i in individuals_in_family:
-                        print("Individual %s" % [('family_id', i.family), ('indiv_id', i.indiv_id), ('paternal_id', i.paternal_id), ('maternal_id', i.maternal_id), ('gender', i.gender), ('affected', i.affected)])
+                        print("Individual %s" % [('family_id', i.family), ('indiv_id', i.indiv_id), ('paternal_id', i.paternal_id), ('maternal_id', i.maternal_id), ('sex', i.sex), ('affected', i.affected)])
                     print('------------')
                     continue   # failed to generate image
                         

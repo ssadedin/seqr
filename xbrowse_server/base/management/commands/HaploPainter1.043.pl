@@ -68,7 +68,7 @@ my $param = {
 	PEDEGREE_FORMATS => { linkage => 1, csv => 1 },
 	SHOW_GRID => 1,
 	SORT_BY_PEDID => 0,
-	SORT_COUPLE_BY_GENDER => 0,
+	SORT_COUPLE_BY_SEX => 0,
 	WRITE_BOM => 1
 };
 
@@ -190,7 +190,7 @@ my $def = {
 		PED_ORG => {},
 		PROBAND_SIGN => 'P',
 		SHOW_COLORED_TEXT => 0,
-		SHOW_GENDER_SAB => 1,
+		SHOW_SEX_SAB => 1,
 		SHOW_HAPLO_BAR => 1,
 		SHOW_HAPLO_BBOX => 1,
 		SHOW_HAPLO_NI_0 => 1,
@@ -470,7 +470,7 @@ sub _MainMenu {
 				[ 'command', 'Page Settings ...', -command => \&OptionsPrint  ],
 				'-',
 				[ 'checkbutton', 'Sort by SID' , -variable => \$param->{SORT_BY_PEDID} ],	
-				[ 'checkbutton', 'Sort couples by gender' , -variable => \$param->{SORT_COUPLE_BY_GENDER} ],	
+				[ 'checkbutton', 'Sort couples by sex' , -variable => \$param->{SORT_COUPLE_BY_SEX} ],
 										
 			]
 		],
@@ -597,7 +597,7 @@ sub ExecuteBatchMode {
 	
 	my %pok = qw(-pedfile 1 -pedformat 1 -outfile 1 -outformat 1 -hapfile 1 -hapformat 1 -mapfile 1 -mapformat 1 -family 1 
 	-resolution 1 -paper 1 -orientation 1 -border 1 -bgcolor 1 -dbtype 1 -dbport 1 -dbsid 1 -dbhost 1 -dbtable 1 -dbuname 1 
-	-dbpasswd 1 -breakloop 1 -sortbyid 1 -sortbygender 1);
+	-dbpasswd 1 -breakloop 1 -sortbyid 1 -sortbysex 1);
 	@_ = nsort keys %pok;
 	
 	
@@ -655,9 +655,9 @@ sub ExecuteBatchMode {
 		$def->{FAM}{LOOP_BREAK_STATUS} = $arg{-breakloop}
 	}
 	
-	### sort by id or gender
+	### sort by id or sex
 	if ($arg{-sortbyid}) {$param->{SORT_BY_PEDID} = $arg{-sortbyid}}
-	if ($arg{-sortbygender}) {$param->{SORT_COUPLE_BY_GENDER} = $arg{-sortbygender}}
+	if ($arg{-sortbysex}) {$param->{SORT_COUPLE_BY_SEX} = $arg{-sortbysex}}
 
 	### read in pedfile
 	if ($arg{-pedfile} && -f $arg{-pedfile}) { 
@@ -881,22 +881,22 @@ sub SetAsTwins {
 	
 	### set twin group
 	else {
-		my ($par, $gender);
+		my ($par, $sex);
 		foreach my $sib (@sibs) {
 			my $sib_old = $ci->{PID}{$sib}{Case_Info_1};	
 			if (! $self->{FAM}{SID2FATHER}{$fam}{$sib}) {
 				ShowInfo("The twin individual $sib_old must not be a founder.",'warning'); return undef
 			}
 			$par = $self->{FAM}{SID2FATHER}{$fam}{$sib} . '==' .  $self->{FAM}{SID2MOTHER}{$fam}{$sib} if ! $par;
-			$gender = $self->{FAM}{SID2SEX}{$fam}{$sib} if ! $gender;
+			$sex = $self->{FAM}{SID2SEX}{$fam}{$sib} if ! $sex;
 			
 			### twins should be siblings
 			if (! $self->{FAM}{SIBS}{$fam}{$par}{$sib}) {
 				ShowInfo("The twin individual $sib_old is not a member of the sibling group.",'warning'); return undef;
 			}
-			### monozygotic twins schould have same gender
-			if (( $tt eq 'm') && $self->{FAM}{SID2SEX}{$fam}{$sib} != $gender) {
-				ShowInfo("The twin individual $sib_old is declared as monozygotic but differs in gender of other twins.", 'warning'); return undef
+			### monozygotic twins schould have same sex
+			if (( $tt eq 'm') && $self->{FAM}{SID2SEX}{$fam}{$sib} != $sex) {
+				ShowInfo("The twin individual $sib_old is declared as monozygotic but differs in sex of other twins.", 'warning'); return undef
 			}				
 		}
 		
@@ -1015,13 +1015,13 @@ sub AddMateAndOffspring {
 	my $pid_old = $self->{FAM}{CASE_INFO}{$fam}{PID}{$p}{Case_Info_1} or return;
 	my $sex_p = $self->{FAM}{SID2SEX}{$fam}{$p};
 	if ( ($sex_p ne 1) && ($sex_p ne 2)) {
-		ShowInfo("Individuals with unknown gender are not accepted!",'warning'); return undef
+		ShowInfo("Individuals with unknown sex are not accepted!",'warning'); return undef
 	}
 	
 	my $d = $mw->DialogBox(-title => 'Add mate and offspring',-buttons => ['Ok', 'Cancel']);
 	my $f1 = $d->Frame(-relief => 'groove', -borderwidth => 2)->pack( -padx => 5, -pady => 5, -expand => 1, -fill => 'both', -anchor => 'w');
 	
-	my ($mate, $child,$gender) = ('','', 0);
+	my ($mate, $child,$sex) = ('','', 0);
 	
 	$f1->Label(-text => 'Name of mate')->grid(-row => 0, -column => 0, -sticky => 'e');
 	$f1->Entry(-textvariable => \$mate, -width => 20,
@@ -1055,7 +1055,7 @@ sub AddMateAndOffspring {
 		
 		my $sex_mate = $self->{FAM}{SID2SEX}{$fam}{$pid_mate_new};
 		if (!$sex_mate or ($sex_mate == $sex_p)) {
-			ShowInfo("Gender of mate does not match necessary criteria!",'warning'); return undef
+			ShowInfo("Sex of mate does not match necessary criteria!",'warning'); return undef
 		}
 	}
 	
@@ -1096,16 +1096,16 @@ sub AddSiblings {
 	my $d = $mw->DialogBox(-title => 'Add siblings',-buttons => ['Ok', 'Cancel']);
 	my $f1 = $d->Frame(-relief => 'groove', -borderwidth => 2)->pack( -padx => 5, -pady => 5, -expand => 1, -fill => 'both', -anchor => 'w');
 	
-	my $gender;
+	my $sex;
 	for (1 ..8) {
-		$pid_new->{$_}{GENDER} = 1;
+		$pid_new->{$_}{SEX} = 1;
 		$f1->Label(-text => "Name of sibling #$_")->grid(-row => $_-1, -column => 0, -sticky => 'e');
 		$f1->Entry(-textvariable => \$pid_new->{$_}{NAME}, -width => 20,
 		)->grid(-row => $_-1, -column =>2, -sticky => 'w');
 		
-		$f1->Radiobutton(-value => 1 ,-variable =>\$pid_new->{$_}{GENDER},-text => 'male')->grid(-row => $_-1, -column => 3, -sticky => 'w');
-		$f1->Radiobutton(-value => 2 ,-variable =>\$pid_new->{$_}{GENDER},-text => 'female')->grid(-row => $_-1, -column => 4, -sticky => 'w');
-		$f1->Radiobutton(-value => 0 ,-variable =>\$pid_new->{$_}{GENDER},-text => 'unknown gender')->grid(-row => $_-1, -column => 5, -sticky => 'w');		
+		$f1->Radiobutton(-value => 1 ,-variable =>\$pid_new->{$_}{SEX},-text => 'male')->grid(-row => $_-1, -column => 3, -sticky => 'w');
+		$f1->Radiobutton(-value => 2 ,-variable =>\$pid_new->{$_}{SEX},-text => 'female')->grid(-row => $_-1, -column => 4, -sticky => 'w');
+		$f1->Radiobutton(-value => 0 ,-variable =>\$pid_new->{$_}{SEX},-text => 'unknown sex')->grid(-row => $_-1, -column => 5, -sticky => 'w');
 	}
 		                                                  
 	$d->Show eq 'Ok' || return;
@@ -1117,7 +1117,7 @@ sub AddSiblings {
 			if ($self->{FAM}{PID2PIDNEW}{$fam}{$name}) {
 		 		ShowInfo("The PID $name is already in use, pleasy try again!", 'error'); return  
 			}
-			push @ { $self->{FAM}{PED_ORG}{$fam} }, [ $name, $f_old, $m_old, $pid_new->{$_}{GENDER}, 1 ];
+			push @ { $self->{FAM}{PED_ORG}{$fam} }, [ $name, $f_old, $m_old, $pid_new->{$_}{SEX}, 1 ];
 			$flag = 1
 		}
 	}
@@ -1291,7 +1291,7 @@ sub KlickSymbol {
 			my $id = $1;
 			my $sid_old = $ci->{$id}{'Case_Info_1'};
 			my $sid_old_save = $sid_old;
-			my $gender = $self->{FAM}{SID2SEX}{$fam}{$id};
+			my $sex = $self->{FAM}{SID2SEX}{$fam}{$id};
 			
 			my $d = $mw->DialogBox(-title => 'Change individual settings',-buttons => ['Ok', 'Cancel']);
 			my $f0 = $d->Frame(-relief => 'groove', -borderwidth => 2)->pack( -padx => 5, -pady => 5, -expand => 1, -fill => 'both');
@@ -1324,9 +1324,9 @@ sub KlickSymbol {
 			$f1->Checkbutton(-text => 'TOP', -variable => \$self->{FAM}{IS_SAB_OR_TOP}{$fam}{$id})->grid(-row => 2, -column => 0, -sticky => 'w');
 			$f1->Checkbutton(-text => 'proband', -variable => \$self->{FAM}{IS_PROBAND}{$fam}{$id})->grid(-row => 3, -column => 0, -sticky => 'w');
 			                                                
-			$f1->Radiobutton(-value => 0 ,-variable =>\$gender,-text => 'unknown gender')->grid(-row => 2, -column => 1, -sticky => 'w');
-			$f1->Radiobutton(-value => 1 ,-variable =>\$gender,-text => 'male')->grid(-row => 0, -column => 1, -sticky => 'w');
-			$f1->Radiobutton(-value => 2 ,-variable =>\$gender,-text => 'female')->grid(-row => 1, -column => 1, -sticky => 'w');
+			$f1->Radiobutton(-value => 0 ,-variable =>\$sex,-text => 'unknown sex')->grid(-row => 2, -column => 1, -sticky => 'w');
+			$f1->Radiobutton(-value => 1 ,-variable =>\$sex,-text => 'male')->grid(-row => 0, -column => 1, -sticky => 'w');
+			$f1->Radiobutton(-value => 2 ,-variable =>\$sex,-text => 'female')->grid(-row => 1, -column => 1, -sticky => 'w');
 			
 			$f2->Label(-text => 'Text inside symbol')->grid(-row => 0, -column => 0, -sticky => 'e');
 			$f2->Entry(-textvariable => \$self->{FAM}{INNER_SYMBOL_TEXT}{$fam}{$id}, -width => 20,
@@ -1356,10 +1356,10 @@ sub KlickSymbol {
 			elsif ($_ eq 'Ok') { 
 				
 				
-				if (($gender ne $self->{FAM}{SID2SEX}{$fam}{$id}) && $self->{FAM}{CHILDREN}{$fam}{$id}) {
-					ShowInfo("Changing gender for individuals that which have offspring is forbidden!", 'warning'); return
+				if (($sex ne $self->{FAM}{SID2SEX}{$fam}{$id}) && $self->{FAM}{CHILDREN}{$fam}{$id}) {
+					ShowInfo("Changing sex for individuals that which have offspring is forbidden!", 'warning'); return
 				}
-				$self->{FAM}{SID2SEX}{$fam}{$id} = $gender;
+				$self->{FAM}{SID2SEX}{$fam}{$id} = $sex;
 				
 				### Check if case info #1 contains data 
 				if (!$sid_old) {
@@ -2749,7 +2749,7 @@ sub ReadPed {
 	###	           PERSON                   [ text ]
 	###	           FATHER                   [ text ]
 	###	           MOTHER                   [ text ]
-	###	           GENDER                   [ [0 or x], [1 or m] ,[2 or f] ]
+	###	           SEX                      [ [0 or x], [1 or m] ,[2 or f] ]
 	###	           AFFECTION                [ [0 or x], 1,2,3,4,5,6,7,8,9 ]
 	
 	if ( uc $arg{-format} eq 'LINKAGE' ) {
@@ -2787,7 +2787,7 @@ sub ReadPed {
 	###	 1          PERSON                   [ text ]
 	###	 2          FATHER                   [ text ]
 	###	 3          MOTHER                   [ text ]
-	###	 4          GENDER                   [ [0 or x], [1 or m] ,[2 or f] ]
+	###	 4          SEX                   [ [0 or x], [1 or m] ,[2 or f] ]
 	###	 5          AFFECTION                [ [0 or x], 1,2,3,4,5,6,7,8,9 ]
 	###	 6     0    IS_DECEASED              [ [NULL or 0 or n], [ 1 or y ] ]
 	###	 7     1    IS_SAB_OR_TOP            [ [NULL or 0 or n], [ 1 or y ] ]
@@ -2920,8 +2920,8 @@ sub ProcessFamily {
 	my $fam = shift @_ || $self->{GLOB}{CURR_FAM};
 	unless ($fam) { ShowInfo("Achtung : Argumentfehler in Funktion ProcessFamily ", 'error'); return }
 	my (@er, $er, %save, %twins, %consang);
-	### translate gender values
-	my %tgender = (qw/0 0 1 1 2 2 x 0 X 0 m 1 M 1 f 2 F 2/);
+	### translate sex values
+	my %tsex = (qw/0 0 1 1 2 2 x 0 X 0 m 1 M 1 f 2 F 2/);
 	my $ci = $self->{FAM}{CASE_INFO}{$fam} = {};	
 	unless ($self->{FAM}{PED_ORG}{$fam}) { ShowInfo("There is no family $fam!",'error'); return undef }
 
@@ -2932,7 +2932,7 @@ sub ProcessFamily {
 		next unless $l;
 		my ($old_sid, $old_fid, $old_mid, $sex, $aff, @sample_info) = @$l;
 		my ($sid, $fid, $mid);
-		$sex = $tgender{$sex};
+		$sex = $tsex{$sex};
 		### SID
 		if (! $save{$old_sid} ) {
 			$sid = $id_counter; 
@@ -2999,7 +2999,7 @@ sub ProcessFamily {
 		elsif ( ! $fid && ! $mid  )  { $self->{FAM}{FOUNDER}{$fam}{$sid} = 1 }
 		else { push @er, "Error in line - father or mother must not be zero: @$l\n"; next }
 
-		### individuals gender
+		### individuals sex
 		$self->{FAM}{SID2SEX}{$fam}{$sid} = $sex;
 
 		### individuals affection status
@@ -3051,7 +3051,7 @@ sub ProcessFamily {
 	}
 
 	### some checks ...
-	### gender of parents	
+	### sex of parents	
 	foreach my $sid ( keys % { $self->{FAM}{SID2FATHER}{$fam} } ) {
 		my $sid_old = $ci->{PID}{$sid}{Case_Info_1};
 		my $fid = $self->{FAM}{SID2FATHER}{$fam}{$sid};
@@ -3074,13 +3074,13 @@ sub ProcessFamily {
 		my $sid_old = $ci->{PID}{$sid}{Case_Info_1};
 		my $fid = $self->{FAM}{SID2FATHER}{$fam}{$sid};
 		my $fid_old = $ci->{PID}{$fid}{Case_Info_1};
-		push @er,  "Gender of individual $fid_old should be male, because it has been declarated as father of $sid_old.\n" if defined $self->{FAM}{SID2SEX}{$fam}{$fid} && $self->{FAM}{SID2SEX}{$fam}{$fid} ne '1'	
+		push @er,  "Sex of individual $fid_old should be male, because it has been declarated as father of $sid_old.\n" if defined $self->{FAM}{SID2SEX}{$fam}{$fid} && $self->{FAM}{SID2SEX}{$fam}{$fid} ne '1'
 	}
 	foreach my $sid ( keys % { $self->{FAM}{SID2MOTHER}{$fam} } ) {
 		my $sid_old = $ci->{PID}{$sid}{Case_Info_1};
 		my $mid = $self->{FAM}{SID2MOTHER}{$fam}{$sid};
 		my $mid_old = $ci->{PID}{$mid}{Case_Info_1};
-		push @er,  "Gender of individual $mid_old should be female, because it has been declarated as mother of $sid_old.\n" if defined $self->{FAM}{SID2SEX}{$fam}{$mid} && $self->{FAM}{SID2SEX}{$fam}{$mid} ne '2'
+		push @er,  "Sex of individual $mid_old should be female, because it has been declarated as mother of $sid_old.\n" if defined $self->{FAM}{SID2SEX}{$fam}{$mid} && $self->{FAM}{SID2SEX}{$fam}{$mid} ne '2'
 	}
 	### founder without children
 	foreach my $founder ( keys % { $self->{FAM}{FOUNDER}{$fam} } ) {
@@ -3101,7 +3101,7 @@ sub ProcessFamily {
 			$twt = lc $twt;
 									
 			### are twins truly siblings?
-			my ($par, $gender);
+			my ($par, $sex);
 			N2:foreach my $sib (@twins) {
 				my $sib_old = $ci->{PID}{$sib}{Case_Info_1};
 				### twins should not be declared as founder
@@ -3109,14 +3109,14 @@ sub ProcessFamily {
 					push @er,  "The twin individual $sib_old must not be a founder.\n"; next N1
 				}
 				$par = $self->{FAM}{SID2FATHER}{$fam}{$sib} . '==' .  $self->{FAM}{SID2MOTHER}{$fam}{$sib} if ! $par;
-				$gender = $self->{FAM}{SID2SEX}{$fam}{$sib} if ! $gender;
+				$sex = $self->{FAM}{SID2SEX}{$fam}{$sib} if ! $sex;
 				### twins should be siblings
 				if (! $self->{FAM}{SIBS}{$fam}{$par}{$sib}) {
 					push @er,  "The twin individual $sib_old is not a member of the sibling group.\n"; next N1
 				}
-				### monozygotic twins schould have same gender
-				if (( $twt eq 'm') && $self->{FAM}{SID2SEX}{$fam}{$sib} != $gender) {
-					push @er,  "The twin individual $sib_old is declared as monozygotic but differs in gender of other twins.\n"; next N1
+				### monozygotic twins schould have same sex
+				if (( $twt eq 'm') && $self->{FAM}{SID2SEX}{$fam}{$sib} != $sex) {
+					push @er,  "The twin individual $sib_old is declared as monozygotic but differs in sex of other twins.\n"; next N1
 				}
 			
 				### store twin information
@@ -3423,7 +3423,7 @@ sub FindTop {
 		((defined $self->{FAM}{FOUNDER}{$fam}{$m} or (defined $self->{FAM}{DUPLICATED_PID_ORIG}{$fam}{$m})))
 		) {
 			my @TOP = ($f,$m);
-			ChangeOrder(\@TOP) if ! $param->{SORT_COUPLE_BY_GENDER};
+			ChangeOrder(\@TOP) if ! $param->{SORT_COUPLE_BY_SEX};
 			$Top{$partner} = [ @TOP ];
 			$self->{FAM}{STRUK}{$fam} = 	[
 									[
@@ -5152,7 +5152,7 @@ sub DrawOrExportCanvas {
 		### Drawing unknown SYMBOL Elements
 		foreach my $r (@ { $de->{SYM_UNKNOWN} }) { $canvas->createPolygon(@$r) }					
 		#### Drawing  Text elements
-		foreach my $e (qw/  INNER_SYMBOL_TEXT CASE_INFO TITLE PROBAND_TEXT MARK_TEXT SAB_GENDER/ ) {foreach my $r (@ { $de->{$e} }) { $canvas->createText(@$r)}}			
+		foreach my $e (qw/  INNER_SYMBOL_TEXT CASE_INFO TITLE PROBAND_TEXT MARK_TEXT SAB_SEX/ ) {foreach my $r (@ { $de->{$e} }) { $canvas->createText(@$r)}}			
 		### Drawing live status line
 		foreach my $r (@ { $de->{LIVE_LINE} }) { $canvas->createLine(@$r) }		
 		### Haplotype Bar not informative
@@ -5192,7 +5192,7 @@ sub DrawOrExportCanvas {
 		return unless @fams;
 		
 		open (FH, $encoding, $file_name) or (ShowInfo("$!: $file_name", 'warning'), return );
-			my $head = join "\t", (qw / *FAMILY PERSON FATHER MOTHER GENDER AFFECTION IS_DECEASED IS_SAB_OR_TOP 
+			my $head = join "\t", (qw / *FAMILY PERSON FATHER MOTHER SEX AFFECTION IS_DECEASED IS_SAB_OR_TOP 
 			IS_PROBAND IS_ADOPTED ARE_TWINS ARE_CONSANGUINEOUS INNER_SYMBOL_TEXT SIDE_SYMBOL_TEXT 
 			LOWER_SYMBOL_TEXT1 LOWER_SYMBOL_TEXT2 LOWER_SYMBOL_TEXT3 LOWER_SYMBOL_TEXT4/);
 			
@@ -5274,7 +5274,7 @@ sub DrawOrExportCanvas {
 		$cairo->scale($f,$f);			
 		
 		### any  text
-		foreach my $e (qw /SAB_GENDER MARK_TEXT HAP_TEXT MAP_MARKER_LEFT MAP_MARKER_RIGHT MAP_POS_LEFT MAP_POS_RIGHT TITLE CASE_INFO INNER_SYMBOL_TEXT PROBAND_TEXT/) {
+		foreach my $e (qw /SAB_SEX MARK_TEXT HAP_TEXT MAP_MARKER_LEFT MAP_MARKER_RIGHT MAP_POS_LEFT MAP_POS_RIGHT TITLE CASE_INFO INNER_SYMBOL_TEXT PROBAND_TEXT/) {
 			foreach my $r (@ { $de->{$e} }) {
 				my $x = $r->[0]; my $y = $r->[1];	
 				my $weight = ''; $weight = 'Bold' if $r->[7][2] eq 'bold'; 
@@ -5414,7 +5414,7 @@ sub DrawOrExportCanvas {
 				$cairo->stroke;		
 			}		 
 		
-		### unknown gender symbols
+		### unknown sex symbols
 		foreach my $r (@{$de->{SYM_UNKNOWN}}) {
 			my ($x1,$y1,$x2,$y2,$x3,$y3,$x4,$y4 ) = @$r[0..7];
 			for ($x1,$x2,$x3,$x4) { $_-=$x1_bb }
@@ -5502,7 +5502,7 @@ sub DrawOrExportCanvas {
 		
 		
 		### any  text
-		foreach my $e (qw /SAB_GENDER MARK_TEXT HAP_TEXT MAP_MARKER_LEFT MAP_MARKER_RIGHT MAP_POS_LEFT MAP_POS_RIGHT TITLE CASE_INFO INNER_SYMBOL_TEXT PROBAND_TEXT/) {
+		foreach my $e (qw /SAB_SEX MARK_TEXT HAP_TEXT MAP_MARKER_LEFT MAP_MARKER_RIGHT MAP_POS_LEFT MAP_POS_RIGHT TITLE CASE_INFO INNER_SYMBOL_TEXT PROBAND_TEXT/) {
 			foreach my $r (@ { $de->{$e} }) {
 				my $x = $r->[0]-$x1_bb;
 				my $y = $r->[1]-$y1_bb;
@@ -5707,7 +5707,7 @@ sub SetSymbols {
 				];						
 			}
 						
-			### unknown gender
+			### unknown sex
 			else {
 				push @ { $de->{SYM_UNKNOWN} }, [
 					($cx-$sz*sqrt(2))*$z, $cy*$z,
@@ -5837,9 +5837,9 @@ sub SetSymbols {
 				push @ { $de->{IS_ADOPTED} }, [ @l2, -width => $l*$z,-fill => $lnc ];				
 			}
 			
-			### show gender as text under sab
-			if ($self->{FAM}{IS_SAB_OR_TOP}{$fam}{$p} && $self->{FAM}{SHOW_GENDER_SAB}{$fam}) {
-				push @ { $de->{SAB_GENDER} }, [											
+			### show sex as text under sab
+			if ($self->{FAM}{IS_SAB_OR_TOP}{$fam}{$p} && $self->{FAM}{SHOW_SEX_SAB}{$fam}) {
+				push @ { $de->{SAB_SEX} }, [											
 					$cx*$z,  ($cy+($f4->{SIZE}/1.5))*$z,-anchor => 'center', 										
 					-text => $t{$sex} ,-font => $font4, -fill => $f4->{COLOR}
 				];
@@ -6982,11 +6982,11 @@ sub SetCouples {
 	@S = keys %P;			
 	return $child unless @S;
 	ChangeOrder(\@S);
-	if ($param->{SORT_COUPLE_BY_GENDER}) {
+	if ($param->{SORT_COUPLE_BY_SEX}) {
 		@_ = (); 
 		foreach (@S) { push @_, $_ if $self->{FAM}{SID2SEX}{$fam}{$_} == 1 }
 		foreach (@S) { push @_, $_ if $self->{FAM}{SID2SEX}{$fam}{$_} != 1 }
-		@_ = reverse(@_) if $param->{SORT_COUPLE_BY_GENDER} == 2;
+		@_ = reverse(@_) if $param->{SORT_COUPLE_BY_SEX} == 2;
 		@S = @_
 	}
 	

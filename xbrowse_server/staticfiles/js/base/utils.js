@@ -115,10 +115,10 @@ window.utils = {
 	// right now using random font awesome classes
 	// TODO: create new icon font for this
 	getIconClass: function(indiv) {
-		if (indiv.gender == "Female" && indiv.affected == "Affected") return 'icon-circle'; 
-		else if (indiv.gender == "Female" && indiv.affected == "Unaffected") return 'icon-circle-blank'; 
-		else if (indiv.gender == "Male" && indiv.affected == "Affected") return 'icon-bookmark'; 
-		else if (indiv.gender == "Male" && indiv.affected == "Unaffected") return 'icon-check-empty'; 
+		if (indiv.sex == "Female" && indiv.affected == "Affected") return 'icon-circle'; 
+		else if (indiv.sex == "Female" && indiv.affected == "Unaffected") return 'icon-circle-blank'; 
+		else if (indiv.sex == "Male" && indiv.affected == "Affected") return 'icon-bookmark'; 
+		else if (indiv.sex == "Male" && indiv.affected == "Unaffected") return 'icon-check-empty'; 
 		else return 'icon-beer'; 
 	},
 
@@ -152,10 +152,10 @@ window.utils = {
     },
 
     get_pedigree_icon: function(indiv) {
-        if (indiv.gender == "F" && indiv.affected == "A") return 'fa-circle';
-        else if (indiv.gender == "F" && indiv.affected == "N") return 'fa-circle-o';
-        else if (indiv.gender == "M" && indiv.affected == "A") return 'fa-square';
-        else if (indiv.gender == "M" && indiv.affected == "N") return 'fa-square-o';
+        if (indiv.sex == "F" && indiv.affected == "A") return 'fa-circle';
+        else if (indiv.sex == "F" && indiv.affected == "N") return 'fa-circle-o';
+        else if (indiv.sex == "M" && indiv.affected == "A") return 'fa-square';
+        else if (indiv.sex == "M" && indiv.affected == "N") return 'fa-square-o';
         else return 'fa-question'
     },
 

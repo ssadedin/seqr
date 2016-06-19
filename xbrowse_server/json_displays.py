@@ -22,7 +22,7 @@ def individual_list(_individual_list):
             'project_id': project_id,
             'maternal_id': indiv.maternal_id,
             'paternal_id': indiv.paternal_id,
-            'gender': indiv.gender,
+            'sex': indiv.sex,
             'affected_status': indiv.affected,
             'data': indiv.data(),
         })

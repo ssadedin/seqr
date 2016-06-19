@@ -74,7 +74,7 @@ We've run across multiple dialects of PED file. This is just a TSV file with the
     individual_id
     paternal_id  (0 or '.' is unknown)
     maternal_id  (0 or '.' is unknown)
-    gender  (2=female; 1=male; 0 or '.'=unknown)
+    sex  (2=female; 1=male; 0 or '.'=unknown)
     affected_status  (2=affected; 1=unaffected; 0 or '.'=unknown)
 
 In xBrowse, we use *sample ID* and *individual ID* interchangeably.

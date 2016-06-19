@@ -24,7 +24,7 @@ The PED file format is described in detail on the
 
 A quick primer: PED files have one line per individual with the following fields:
 
-    FAMILY_ID   INDIVIDUAL_ID   PATERNAL_ID MATERNAL_ID GENDER  AFFECTED_STATUS
+    FAMILY_ID   INDIVIDUAL_ID   PATERNAL_ID MATERNAL_ID SEX  AFFECTED_STATUS
 
 Some notes that are specific to xBrowse:
 
@@ -41,7 +41,7 @@ This is not ideal, and was poor design on Brett's part when we first built xBrow
 It means that two siblings are stored the same way as two affected cousins.
 We are exploring a fix for this.
 
-- The `GENDER` is coded as `2` -> Female; `1` -> Male; `.` -> Unknown
+- The `SEX` is coded as `2` -> Female; `1` -> Male; `.` -> Unknown
 
 - The `AFFECTED_STATUS` is coded as `2` -> Affected; `1` -> Unaffected; `.` -> Unknown
 
@@ -51,7 +51,7 @@ As an example, consider the following pedigree:
 
 This pedigree would be encoded in a PED file as follows:
 
-    FAMILY_ID INDIVIDUAL_ID PATERNAL_ID MATERNAL_ID GENDER AFFECTED_STATUS
+    FAMILY_ID INDIVIDUAL_ID PATERNAL_ID MATERNAL_ID SEX AFFECTED_STATUS
     A         1             .           .           1      2
     A         2             .           .           2      1
     A         4             1           2           2      2

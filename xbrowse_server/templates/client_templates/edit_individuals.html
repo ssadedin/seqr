@@ -15,7 +15,7 @@
             <th style="width:80px;">Nickname</th>
             <th style="width:80px;">Father</th>
             <th style="width:80px;">Mother</th>
-            <th style="width:80px;">Gender</th>
+            <th style="width:80px;">Sex</th>
             <th style="width:80px;">Affected</th>
 
        </tr>
@@ -76,11 +76,11 @@
             <td>
                 <select
                     class="table-input"
-                    data-key="gender"
+                    data-key="sex"
                     data-indiv="<%= indiv.indiv_id %>" >
-                    <option value="M" <% if (indiv.gender == "M") { %>selected="selected"<% } %> >Male</option>
-                    <option value="F" <% if (indiv.gender == "F") { %>selected="selected"<% } %> >Female</option>
-                    <option value="U" <% if (indiv.gender == "U") { %>selected="selected"<% } %> >Unknown</option>
+                    <option value="M" <% if (indiv.sex == "M") { %>selected="selected"<% } %> >Male</option>
+                    <option value="F" <% if (indiv.sex == "F") { %>selected="selected"<% } %> >Female</option>
+                    <option value="U" <% if (indiv.sex == "U") { %>selected="selected"<% } %> >Unknown</option>
                 </select>
             </td>
 

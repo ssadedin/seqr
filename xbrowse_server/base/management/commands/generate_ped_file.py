@@ -4,7 +4,6 @@ from xbrowse_server.base.models import Project
 from xbrowse.parsers import fam_stuff
 from collections import defaultdict
 
-from optparse import make_option
 import re
 import os
 
@@ -46,7 +45,7 @@ class Command(BaseCommand):
             individual_family_id = defaultdict(list)  # maps inidiv id to their family name. This is a list of family_ids because an individual may have different family ids in different projects.
             individual_paternal_id = {}
             individual_maternal_id = {}
-            individual_gender = {}
+            individual_sex = {}
             individual_affected = {}
             individual_projects = defaultdict(list)  # maps indiv id to project names where this individual appears
             individual_vcfs = defaultdict(list)   # maps indiv id to all vcfs containing this individ
@@ -93,14 +92,14 @@ class Command(BaseCommand):
                         else:
                             individual_maternal_id[i_id] = maternal_id
 
-                    gender = i.gender
-                    if gender not in [".", "U"]:
-                        if i_id in individual_gender and individual_gender[i_id] != gender:
-                            #prev_gender = individual_gender[i_id]
-                            #print("ERROR: %(project_name)s : %(i_id)s has gender ids: %(prev_gender)s and %(gender)s" % locals())
-                            individual_gender[i_id] = "conflict"
+                    sex = i.sex
+                    if sex not in [".", "U"]:
+                        if i_id in individual_sex and individual_sex[i_id] != sex:
+                            #prev_sex = individual_sex[i_id]
+                            #print("ERROR: %(project_name)s : %(i_id)s has sex ids: %(prev_sex)s and %(sex)s" % locals())
+                            individual_sex[i_id] = "conflict"
                         else:
-                            individual_gender[i_id] = gender
+                            individual_sex[i_id] = sex
 
                     affected = i.affected
                     if affected not in [".", "U"]:
@@ -123,8 +122,8 @@ class Command(BaseCommand):
 
             f = open(filename, "w")
             f2 = open(filename2, "w")
-            header = ["family", "individual", "paternal_id", "maternal_id", "gender", "affected"]
-            header2 = ["family", "individual", "paternal_id", "maternal_id", "gender", "affected", "project_ids", "vcfs", "vcf_ids"]
+            header = ["family", "individual", "paternal_id", "maternal_id", "sex", "affected"]
+            header2 = ["family", "individual", "paternal_id", "maternal_id", "sex", "affected", "project_ids", "vcfs", "vcf_ids"]
             f.write("# %s\n" % "\t".join(header))
             f.write("# %s\n" % "\t".join(header2))
             print("\t".join(header2))
@@ -132,10 +131,10 @@ class Command(BaseCommand):
                 family_id = individual_family_id[i_id]
                 maternal_id = individual_maternal_id.get(i_id, None)
                 paternal_id = individual_paternal_id.get(i_id, None)
-                gender = individual_gender.get(i_id, None) or "unknown"  # if None or empty string, set it to unknown
+                sex = individual_sex.get(i_id, None) or "unknown"  # if None or empty string, set it to unknown
                 affected = individual_affected.get(i_id, None) or "unknown"
 
-                fields = [family_id, i_id, paternal_id or ".", maternal_id or ".", gender, affected]
+                fields = [family_id, i_id, paternal_id or ".", maternal_id or ".", sex, affected]
 
                 f.write("\t".join(fields) + "\n")
                 s2 = "\t".join(fields + [",".join(individual_projects[i_id]), ",".join(individual_vcfs[i_id]),

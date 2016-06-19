@@ -62,8 +62,8 @@ window.IndividualListTable = Backbone.View.extend({
         // maternal_id
         m.set('maternal_id', form_fields.filter('[data-key="maternal_id"]').val() );
 
-        // gender
-        m.set('gender', form_fields.filter('[data-key="gender"]').val() );
+        // sex
+        m.set('sex', form_fields.filter('[data-key="sex"]').val() );
 
         // affected
         m.set('affected', form_fields.filter('[data-key="affected"]').val());

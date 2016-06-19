@@ -233,7 +233,7 @@
             {% for indiv in family.individual_set.all %}
                 <tr>
                     <td><span class="individual">{{ indiv }}</span></td>
-                    <td>{{ indiv.gender_display }}</td>
+                    <td>{{ indiv.sex_display }}</td>
                     <td>{{ indiv.affected_status_display }}</td>
                     <td>{% if indiv.maternal_id %}{{ indiv.maternal_id }}{% else %}-{% endif %}</td>
                     <td>{% if indiv.paternal_id %}{{ indiv.paternal_id }}{% else %}-{% endif %}</td>

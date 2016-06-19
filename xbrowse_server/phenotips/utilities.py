@@ -23,7 +23,7 @@ def create_patient_record(external_id, project_id, patient_details=None):
     """
     uri = settings.PHENOPTIPS_HOST_NAME + '/bin/PhenoTips/OpenPatientRecord?create=true&eid=' + external_id
     if patient_details is not None:
-        uri += '&gender=' + patient_details['gender']
+        uri += '&sex=' + patient_details['sex']
     uname, pwd = get_uname_pwd_for_project(project_id)
     result, curr_session = do_authenticated_call_to_phenotips(uri, uname, pwd)
     if result is not None and result.status_code == 200:
@@ -254,10 +254,10 @@ def add_individuals_to_phenotips(project_id, individual_ids=None):
     for individual_id in individual_ids:
         indiv = Individual.objects.get(project__project_id=project_id, indiv_id=individual_id)
 
-        assert indiv.gender in ['M', 'F', 'U'], "Unexpected value for gender in %s : %s " % (indiv, indiv.gender)
+        assert indiv.sex in ['M', 'F', 'U'], "Unexpected value for sex in %s : %s " % (indiv, indiv.sex)
 
         print("%s: Creating phenotips patient for guid: %s " % (project_id, indiv.guid))
-        create_patient_record(indiv.guid, project_id, patient_details={'gender': indiv.gender})
+        create_patient_record(indiv.guid, project_id, patient_details={'sex': indiv.sex})
 
 
 def add_individuals_with_details_to_phenotips(individual_details, project_id):
@@ -265,18 +265,18 @@ def add_individuals_with_details_to_phenotips(individual_details, project_id):
     DEPRECATED: Use add_individuals_to_phenotips instead
 
       Given a list of individuals via a PED file, add them to phenotips
-      Note: using ONLY gender information from the PED file as of Jan 2016
+      Note: using ONLY sex information from the PED file as of Jan 2016
     """
     for individual in individual_details:
         indiv_id = individual['indiv_id']
-        if individual['gender'] == 'female':
-            extra_details = {'gender': 'F'}
-        elif individual['gender'] == 'male':
-            extra_details = {'gender': 'M'}
-        elif individual['gender'] == 'unknown':
+        if individual['sex'] == 'female':
+            extra_details = {'sex': 'F'}
+        elif individual['sex'] == 'male':
+            extra_details = {'sex': 'M'}
+        elif individual['sex'] == 'unknown':
             extra_details = None
         else:
-            raise ValueError("Unpexpected 'gender' value in individual %s" % str(individual))
+            raise ValueError("Unpexpected 'sex' value in individual %s" % str(individual))
 
         create_patient_record(indiv_id, project_id, extra_details)
 
