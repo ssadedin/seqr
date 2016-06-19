@@ -2,13 +2,10 @@ from django.core import serializers
 import sys
 import json
 from django.core.management.base import BaseCommand
-from optparse import make_option
 from django.contrib.auth.models import User
 from xbrowse_server.base.models import Project, ProjectCollaborator, Project, \
-    Family, FamilyImageSlide, Cohort, Individual, \
-    FamilySearchFlag, FamilyGroup, \
-    CausalVariant, ProjectTag, VariantTag, VariantNote, ReferencePopulation, \
-    UserProfile, VCFFile, ProjectGeneList
+    Family, FamilyImageSlide, Cohort, Individual, FamilyGroup, \
+    CausalVariant, ProjectTag, VariantTag, VariantNote, ProjectGeneList
 from xbrowse_server.gene_lists.models import GeneList, GeneListItem
 from django.db.models import Q
 
@@ -38,7 +35,6 @@ class Command(BaseCommand):
         FamilyImageSlide => Family
         Cohort => Project  (individuals = models.ManyToManyField('base.Individual'), vcf_files, bam_file)
         Individual => Project, Family  # vcf_files = models.ManyToManyField(VCFFile, null=True, blank=True), bam_file = models.ForeignKey('datasets.BAMFile', null=True, blank=True)
-        FamilySearchFlag => User, Family
         CausalVariant => Family
         ProjectTag => Project
         VariantTag => ProjectTag, Family
@@ -132,11 +128,6 @@ class Command(BaseCommand):
         for gene_list in gene_lists:
             output_obj += list(gene_list.genelistitem_set.all())
 
-        # FamilySearchFlag
-        family_search_flags = []
-        for family in families:
-            family_search_flags.extend(list(FamilySearchFlag.objects.filter(family=family)))
-        output_obj += family_search_flags
 
 
         with open(project_id+".json", "w") as f:
@@ -381,20 +372,6 @@ class Command(BaseCommand):
 
                 elif obj_model == "base.referencepopulation":
                     print("WARNING: base.referencepopulation not implemented. Won't deserialize " + str(obj_fields))
-                elif obj_model == "base.familysearchflag":
-                    family_search_flag, created = FamilySearchFlag.objects.get_or_create(
-                        family = families[obj_fields['family']],
-                        xpos = obj_fields['xpos'],
-                        ref = obj_fields['ref'],
-                        alt = obj_fields['alt'],
-                        flag_type = obj_fields['flag_type'],
-                        suggested_inheritance = obj_fields['suggested_inheritance'],
-                        date_saved = obj_fields['date_saved'],
-                        note = obj_fields['note'],
-                    )
-
-                    family_search_flag.search_spec_json = obj_fields['search_spec_json']
-                    family_search_flag.save()
                 else:
                     raise ValueError("Unexpected obj_model: " + obj_model)
 
