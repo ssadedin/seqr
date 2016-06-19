@@ -1,5 +1,3 @@
-from optparse import make_option
-from xbrowse_server import xbrowse_controls
 from django.core.management.base import BaseCommand
 from django.conf import settings
 from xbrowse_server.base.models import ReferencePopulation

@@ -1,5 +1,3 @@
-from optparse import make_option
-from xbrowse_server import xbrowse_controls
 from django.core.management.base import BaseCommand
 from xbrowse_server.base.models import Project, Family
 from xbrowse_server.xbrowse_controls import load_project_variants_from_vcf

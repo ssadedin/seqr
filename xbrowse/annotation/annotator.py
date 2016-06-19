@@ -7,6 +7,7 @@ from xbrowse.annotation import vep_annotations
 from xbrowse.core import constants
 import vcf
 
+
 class VariantAnnotator():
 
     def __init__(self, settings_module, custom_annotator=None):
@@ -37,7 +38,6 @@ class VariantAnnotator():
         projects.
         """
         return self._population_frequency_store
-
 
     def load(self):
         self._clear()
@@ -84,7 +84,6 @@ class VariantAnnotator():
 
         print("Loading pre-annotated VCF file: %s into db.variants cache" % vcf_file_path)
         for variant, vep_annotation in vep_annotations.parse_vep_annotations_from_vcf(open(vcf_file_path)):
-        # for variant_t in vcf_stuff.iterate_tuples(compressed_file(vcf_file_path)):
             variant_t = variant.unique_tuple()
 
             annotation = {

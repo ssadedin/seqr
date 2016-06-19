@@ -4,7 +4,6 @@ from xbrowse import vcf_stuff
 import gzip
 from xbrowse_server.mall import get_mall
 import os
-from optparse import make_option
 from xbrowse import genomeloc
 
 

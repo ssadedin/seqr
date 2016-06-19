@@ -13,7 +13,7 @@ from django.core.exceptions import PermissionDenied
 
 from xbrowse.analysis_modules.combine_mendelian_families import get_variants_by_family_for_gene
 from xbrowse_server.analysis.diagnostic_search import get_gene_diangostic_info
-from xbrowse_server.base.models import Project, Family, FamilySearchFlag, VariantNote, ProjectTag, VariantTag
+from xbrowse_server.base.models import Project, Family, VariantNote, ProjectTag, VariantTag
 from xbrowse_server.api.utils import get_project_and_family_for_user, get_project_and_cohort_for_user, add_extra_info_to_variants_family
 from xbrowse.variant_search.family import get_variants_with_inheritance_mode
 from xbrowse_server.api import utils as api_utils
@@ -356,61 +356,6 @@ def family_variant_annotation(request):
 
     return JSONResponse(ret)
 
-
-@login_required
-@log_request('add_flag')
-def add_family_search_flag(request):
-
-    error = None
-
-    for key in ['project_id', 'family_id', 'xpos', 'ref', 'alt', 'note', 'flag_type', 'flag_inheritance_mode']:
-        if request.GET.get(key, None) == None:
-            error = "%s is requred" % key
-
-    if not error:
-        project = get_object_or_404(Project, project_id=request.GET.get('project_id'))
-        family = get_object_or_404(Family, project=project, family_id=request.GET.get('family_id'))
-        if not project.can_edit(request.user):
-            return PermissionDenied
-
-    if not error:
-        xpos = int(request.GET['xpos'])
-        ref=request.GET.get('ref')
-        alt=request.GET['alt']
-        note=request.GET.get('note')
-        flag_type=request.GET.get('flag_type')
-        flag_inheritance_mode=request.GET.get('flag_inheritance_mode')
-
-        # todo: more validation - is variant valid?
-
-        flag = FamilySearchFlag(user=request.user,
-            family=family,
-            xpos=int(request.GET['xpos']),
-            ref=ref,
-            alt=alt,
-            note=note,
-            flag_type=flag_type,
-            suggested_inheritance=flag_inheritance_mode,
-            date_saved=timezone.now(),
-        )
-
-    if not error:
-        flag.save()
-        variant = get_datastore(project.project_id).get_single_variant(family.project.project_id, family.family_id,
-            xpos, ref, alt )
-        api_utils.add_extra_info_to_variant(get_reference(), family, variant)
-
-        ret = {
-            'is_error': False,
-            'variant': variant.toJSON(),
-        }
-
-    else:
-        ret = {
-            'is_error': True,
-            'error': error,
-        }
-    return JSONResponse(ret)
 
 @login_required
 @log_request('delete_variant_note')

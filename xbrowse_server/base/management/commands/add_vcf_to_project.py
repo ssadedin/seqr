@@ -1,4 +1,3 @@
-from optparse import make_option
 import os
 
 from xbrowse_server import xbrowse_controls
@@ -30,8 +29,8 @@ class Command(BaseCommand):
                 project=project,
                 indiv_id=options.get('indiv_id')
             )
-            sample_management.add_vcf_file_to_individual(individual, vcf_file)
 
+            sample_management.add_vcf_file_to_individual(individual, vcf_file)
         else:
             sample_management.add_vcf_file_to_project(project, vcf_file)
 

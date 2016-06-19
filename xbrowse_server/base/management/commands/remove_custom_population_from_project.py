@@ -1,10 +1,9 @@
 from django.core.management.base import BaseCommand
 from xbrowse_server.base.models import Project, ReferencePopulation
-from optparse import make_option
 import sys
 
-class Command(BaseCommand):
 
+class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('--all-projects', dest="all_projects", action="store_true")

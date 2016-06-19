@@ -1,14 +1,6 @@
-from django.core import serializers
-import sys
-import json
 from django.core.management.base import BaseCommand
-from optparse import make_option
-from django.contrib.auth.models import User
 from xbrowse_server.base.models import Project, ProjectCollaborator, Project, \
     Family, Individual, FamilyGroup, CausalVariant, ProjectTag, VariantTag, VariantNote, ProjectGeneList
-from xbrowse_server.gene_lists.models import GeneList, GeneListItem
-
-from django.core import serializers
 
 
 
@@ -30,7 +22,6 @@ class Command(BaseCommand):
         FamilyImageSlide => Family
         Cohort => Project  (individuals = models.ManyToManyField('base.Individual'), vcf_files, bam_file)
         Individual => Project, Family  # vcf_files = models.ManyToManyField(VCFFile, null=True, blank=True), bam_file = models.ForeignKey('datasets.BAMFile', null=True, blank=True)
-        FamilySearchFlag => User, Family
         CausalVariant => Family
         ProjectTag => Project
         VariantTag => ProjectTag, Family
@@ -153,19 +144,6 @@ class Command(BaseCommand):
 
         for project_gene_list in ProjectGeneList.objects.filter(project=from_project):
             project_gene_list, created = ProjectGeneList.objects.get_or_create(project=to_project, gene_list=project_gene_list.gene_list)
-
-        #family_search_flag, created = FamilySearchFlag.objects.get_or_create(
-        #    family = families[obj_fields['family']],
-        #    xpos = obj_fields['xpos'],
-        #    ref = obj_fields['ref'],
-        #    alt = obj_fields['alt'],
-        #    flag_type = obj_fields['flag_type'],
-        #    suggested_inheritance = obj_fields['suggested_inheritance'], 
-        #    date_saved = obj_fields['date_saved'],
-        #    note = obj_fields['note'],
-        #    )
-        #family_search_flag.search_spec_json = obj_fields['search_spec_json']
-        #family_search_flag.save()
 
 
     def handle(self, *args, **options):

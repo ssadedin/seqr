@@ -1,4 +1,3 @@
-from optparse import make_option
 import sys
 from django.core.management.base import BaseCommand
 from xbrowse_server.phenotips.utilities import find_db_files

@@ -8,10 +8,6 @@ admin.site.register(Cohort)
 admin.site.register(Individual)
 admin.site.register(ReferencePopulation)
 admin.site.register(UserProfile)
-
-admin.site.register(FamilySearchFlag)
-
-admin.site.register(VCFFile)
 admin.site.register(FamilyGroup)
 
 

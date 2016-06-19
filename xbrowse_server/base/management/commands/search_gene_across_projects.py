@@ -1,17 +1,9 @@
-from optparse import make_option
-import sys
-import os
 from django.core.management.base import BaseCommand
-from xbrowse_server.reports.utilities import fetch_project_individuals_data
-import json
-import time
-import datetime
 from pprint import pprint
 from xbrowse_server.analysis import project as project_analysis
 from xbrowse.core.variant_filters import get_default_variant_filter
-from xbrowse_server.api.utils import add_extra_info_to_variants_family, add_extra_info_to_variants_project
+from xbrowse_server.api.utils import add_extra_info_to_variants_project
 from xbrowse_server.mall import get_reference, get_project_datastore
-from xbrowse_server.analysis.project import get_knockouts_in_gene
 from django.conf import settings
 from xbrowse_server.base.models import Project
 from xbrowse.utils.basic_utils import get_gene_id_from_str
