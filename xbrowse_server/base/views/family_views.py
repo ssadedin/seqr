@@ -13,9 +13,8 @@ from xbrowse_server import server_utils
 from xbrowse.reference.utils import get_coding_regions_from_gene_structure
 from xbrowse.core import genomeloc
 from xbrowse_server.base.forms import EditFamilyForm, EditFamilyCauseForm
-from xbrowse_server.base.models import Project, Family, FamilySearchFlag, ProjectGeneList, CausalVariant, ANALYSIS_STATUS_CHOICES
+from xbrowse_server.base.models import Project, Family, ProjectGeneList, CausalVariant, ANALYSIS_STATUS_CHOICES
 from xbrowse_server.decorators import log_request
-from xbrowse_server.base.lookups import get_saved_variants_for_family
 from xbrowse_server.api.utils import add_extra_info_to_variants_family
 from xbrowse_server import json_displays
 from xbrowse_server import sample_management
@@ -67,7 +66,6 @@ def family_home(request, project_id, family_id):
             'family': family,
             'user_can_edit': family.can_edit(request.user),
             'user_is_admin': project.can_admin(request.user),
-            'saved_variants': FamilySearchFlag.objects.filter(family=family).order_by('-date_saved'),
             'analysis_status_desc_and_icon': analysis_status_desc_and_icon,
             'analysis_status_json': analysis_status_json,
         })
@@ -131,27 +129,6 @@ def delete(request, project_id, family_id):
     return render(request, 'family/delete.html', {
         'project': project,
         'family': family,
-    })
-
-@login_required
-@log_request('saved_family_variants')
-def saved_variants(request, project_id, family_id):
-
-    project = get_object_or_404(Project, project_id=project_id)
-    family = get_object_or_404(Family, project=project, family_id=family_id)
-    if not project.can_view(request.user):
-        raise PermissionDenied
-
-    variants, couldntfind = get_saved_variants_for_family(family)
-
-    # TODO: first this shouldnt be in API - base should never depend on api
-    # TODO: also this should have better naming
-    add_extra_info_to_variants_family(get_reference(), family, variants)
-
-    return render(request, 'family/saved_family_variants.html', {
-        'project': project,
-        'family': family,
-        'variants_json': json.dumps([v.toJSON() for v in variants]),
     })
 
 
@@ -404,44 +381,3 @@ def pedigree_image_delete(request, project_id, family_id):
 
 
 
-# @login_required
-# @log_request('family_slides')
-# def slides(request, project_id, family_id):
-#     project = get_object_or_404(Project, project_id=project_id)
-#     family = get_object_or_404(Family, project=project, family_id=family_id)
-#
-#     if not project.can_view(request.user):
-#         raise PermissionDenied
-#
-#     return render(request, 'family/slides.html', {
-#         'project': project,
-#         'family': family,
-#         'slides': slides,
-#     })
-
-
-@login_required
-@log_request('family_variant_view')
-@csrf_exempt
-def family_variant_view(request, project_id, family_id):
-
-    project = get_object_or_404(Project, project_id=project_id)
-    family = get_object_or_404(Family, project=project, family_id=family_id)
-    if not project.can_view(request.user):
-        raise PermissionDenied
-
-    try:
-        xpos = int(request.GET.get('xpos'))
-        ref = request.GET.get('ref')
-        alt = request.GET.get('alt')
-    except:
-        return HttpResponse('Invalid View')
-
-    variant = get_datastore(project_id).get_single_variant(project_id, family_id, xpos, ref, alt)
-    add_extra_info_to_variants_family(get_reference(), family, [variant])
-
-    return render(request, 'family/family_variant_view.html', {
-        'project': project,
-        'family': family,
-        'variant_json': json.dumps(variant.toJSON()),
-    })

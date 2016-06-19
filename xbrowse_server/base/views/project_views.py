@@ -310,7 +310,7 @@ def delete_individuals(request, project_id):
 # todo: move this to an api_utils area
 def save_individual_from_json_dict(project, indiv_dict):
     individual = Individual.objects.get_or_create(indiv_id=indiv_dict['indiv_id'], project=project)[0]
-    individual.gender = indiv_dict.get('gender')
+    individual.sex = indiv_dict.get('sex')
     individual.affected = indiv_dict.get('affected')
     individual.nickname = indiv_dict.get('nickname', '')
     individual.paternal_id = indiv_dict.get('paternal_id', '')
@@ -523,28 +523,6 @@ def variants_with_tag(request, project_id, tag):
             'families_json': json.dumps({family.family_id: family.get_json_obj() for family in project.get_families()})
     })
 
-
-@login_required
-@log_request('causal_variants')
-def causal_variants(request, project_id):
-
-    project = get_object_or_404(Project, project_id=project_id)
-    if not project.can_view(request.user):
-        raise PermissionDenied
-
-    variants = get_causal_variants_for_project(project)
-    variants = sorted(variants, key=lambda v: (v.extras['family_id'], v.xpos))
-    grouped_variants = itertools.groupby(variants, key=lambda v: v.extras['family_id'])
-    for family_id, family_variants in grouped_variants:
-        family = Family.objects.get(project=project, family_id=family_id)
-        family_variants = list(family_variants)
-        add_extra_info_to_variants_family(get_reference(), family, family_variants)
-
-    return render(request, 'project/causal_variants.html', {
-        'project': project,
-        'variants_json': json.dumps([v.toJSON() for v in variants]),
-        'families_json': json.dumps({family.family_id: family.get_json_obj() for family in project.get_families()})
-    })
 
 
 @login_required

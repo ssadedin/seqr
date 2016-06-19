@@ -160,11 +160,4 @@ window.QualityFilter = Backbone.Model.extend({
 
 });
 
-window.FamilySearchFlag = Backbone.Model.extend({
-
-    defaults: {
-
-    },
-
-});
 
