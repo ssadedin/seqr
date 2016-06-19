@@ -6,7 +6,6 @@
   in RDAP.
 '''
 
-from optparse import make_option
 from django.core.management.base import BaseCommand
 from xbrowse_server.phenotips.admin_utilities import fetch_project_phenotips_patient_ids
 from xbrowse_server.phenotips.admin_utilities import delete_these_phenotips_patient_ids
