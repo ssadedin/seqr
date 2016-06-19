@@ -14,5 +14,5 @@ class Command(BaseCommand):
         #    individuals = [User.objects.get(username=arg) for arg in args]
         
         for indiv in individuals:
-            print("\t".join(["project:%s", "family:%s", "indiv:%s", "affected:%s", "sex:%s"]) % (indiv.project.project_id, indiv.family.family_id, indiv.indiv_id, "yes" if indiv.affected else "no", indiv.gender))
+            print("\t".join(["project:%s", "family:%s", "indiv:%s", "affected:%s", "sex:%s"]) % (indiv.project.project_id, indiv.family.family_id, indiv.indiv_id, "yes" if indiv.affected else "no", indiv.sex))
 #            print("%15s   %40s      %10s %10s %s" % (user.username, user.email, user.first_name, user.last_name, [p.project_id for p in Project.objects.all().order_by('project_id') if p.can_view(user)]))

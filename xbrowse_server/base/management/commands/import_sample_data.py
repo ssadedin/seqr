@@ -27,7 +27,7 @@ class Command(BaseCommand):
         for indiv_d in d['individuals']:
             individual = Individual.objects.get_or_create(project=project, indiv_id=indiv_d['indiv_id'])[0]
             individual.nickname = indiv_d['nickname']
-            individual.gender = indiv_d['gender']
+            individual.sex = indiv_d['sex']
             individual.affected = indiv_d['affected']
             individual.maternal_id = indiv_d['maternal_id']
             individual.paternal_id = indiv_d['paternal_id']

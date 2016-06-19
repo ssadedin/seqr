@@ -59,7 +59,7 @@ def copy_project(from_project, to_project, samples=False, settings=False, upsert
                     continue
 
             to_individual.nickname = from_individual.nickname
-            to_individual.gender = from_individual.gender
+            to_individual.sex = from_individual.sex
             to_individual.affected = from_individual.affected
             to_individual.paternal_id = from_individual.paternal_id
             to_individual.maternal_id = from_individual.maternal_id
