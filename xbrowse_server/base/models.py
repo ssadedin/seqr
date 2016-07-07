@@ -654,6 +654,13 @@ class Individual(models.Model):
         ('U', 'Unknown'),
     )
 
+    COVERAGE_STATUS_CHOICES = (
+        ('S', 'In Sequencing'),
+        ('I', 'Interim'),
+        ('C', 'Complete'),
+        ('A', 'Abandoned'),
+    )
+
     # global unique id for this individual (<date>_<time_with_millisec>_<indiv_id>)
     guid = models.SlugField(max_length=165, unique=True, db_index=True)
     indiv_id = models.SlugField(max_length=140, default="", blank=True, db_index=True)
@@ -667,6 +674,9 @@ class Individual(models.Model):
 
     nickname = models.CharField(max_length=140, default="", blank=True)
     other_notes = models.TextField(default="", blank=True, null=True)
+
+    mean_target_coverage = models.FloatField(null=True, blank=True)
+    coverage_status = models.CharField(max_length=1, choices=COVERAGE_STATUS_CHOICES, default='S')
 
     coverage_file = models.CharField(max_length=200, default="", blank=True)
     exome_depth_file = models.CharField(max_length=200, default="", blank=True)
