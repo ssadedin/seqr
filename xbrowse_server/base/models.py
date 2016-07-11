@@ -125,6 +125,8 @@ class Project(models.Model):
     collaborators = models.ManyToManyField(User, blank=True, through='ProjectCollaborator')
     is_public = models.BooleanField(default=False)
 
+    supports_versions = models.BooleanField(default=False)  # temporary field for migrating to Datasets with versions
+
     def __unicode__(self):
         return self.project_name if self.project_name != "" else self.project_id
 
@@ -647,7 +649,6 @@ class Individual(models.Model):
         ('U', 'Unknown'),
     )
 
-
     AFFECTED_CHOICES = (
         ('A', 'Affected'),
         ('N', 'Unaffected'),
@@ -841,14 +842,36 @@ class Individual(models.Model):
         }
 
 
+class VariantCallsetSample(models.Model):
+    """Variant callset sample. One record per sample in a callset."""
+
+    COVERAGE_STATUS_CHOICES = (
+        ('S', 'In Sequencing'),
+        ('I', 'Interim'),    # needs additional sequencing to reach expected (95x) coverage
+        ('C', 'Complete'),   # sample sequencing complete and achieved expected coverage
+        ('A', 'Abandoned'),  # sample failed sequencing
+    )
+
+    individual = models.ForeignKey('Individual')
+    variant_callset = models.ForeignKey('VariantCallset')
+    #sample_info = models.ForeignKey('SequencedSampleInfo')
+
+    mean_target_coverage = models.FloatField(null=True, blank=True)
+    coverage_status = models.CharField(max_length=1, choices=COVERAGE_STATUS_CHOICES, default='S')
+
+    bam_file_path = models.CharField(max_length=1000, default="", blank=True)
+
+    #vcf_id = models.CharField(max_length=40, default="", blank=True)   # sample id in the VCF file if different from indiv_id.
+
+
 class Dataset(models.Model):
     """Parent class for dataset models"""
 
     guid = models.SlugField(max_length=165, unique=True, db_index=True)
-    version = models.CharField(max_length=20, db_index=True)
+    version = models.CharField(max_length=20, db_index=True)  # typically a float, but could be any alphabetically sortable string
 
     added_date = models.DateTimeField(null=True, blank=True)
-    original_path = models.TextField(null=True, blank=True)  # file or url from which the data was loaded
+    original_path = models.TextField(null=True, blank=True)   # file or url from which the data was loaded
 
     SEQUENCING_TYPE_CHOICES = (
         ('WES', 'Exome'),
@@ -857,32 +880,17 @@ class Dataset(models.Model):
 
     sequencing_type = models.CharField(max_length=3, choices=SEQUENCING_TYPE_CHOICES)
 
-
-class SequencedSampleInfo(models.Model):
-    """Sequenced sample information that's independent of sample version, but does depend on sequencing_type"""
-
-    STATUS_CHOICES = (
-        ('s', 'In Sequencing')  # not yet sequenced
-        ('i', 'Interim'),       # needs additional sequencing to reach expected (95x) coverage
-        ('a', 'Abandoned'),     # sample failed sequencing
-        ('c', 'Complete'),      # sample sequencing complete and achieved expected coverage
-    )
-
-    status = models.CharField(max_length=3, choices=STATUS_CHOICES, default='s')
-
-
-class VariantCallsetSample(models.Model):
-    """Variant callset sample. One record per sample in a callset."""
-
-    individual = models.ForeignKey('Individual')
-    sample_info = models.ForeignKey('SequencedSampleInfo')
-    variant_callset = models.ForeignKey('VariantCallset')
+    vcf_files = models.ManyToManyField(VCFFile, blank=True)
 
 
 class VariantCallset(Dataset):
     """Represents a variant callset. One record per callset."""
+
     individuals = models.ManyToManyField(Individual, through='VariantCallsetSample')
 
+
+#class SequencedSampleInfo(models.Model):
+#    """Sequenced sample information that's independent of sample version, but does depend on sequencing_type"""
 
 
 class FamilySearchFlag(models.Model):
