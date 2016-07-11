@@ -16,136 +16,141 @@ class Command(BaseCommand):
         parser.add_argument('-v', '--version', help="source project version", type=float, required=True)
         parser.add_argument('-t', '--type', help="source project type: WGS or WEX", choices=("WGS", "WEX"), required=True)
 
-    def transfer_project(self, from_project_id, to_project_id, to_project_name, project_version, project_type):
+
+    def add_project(self, from_project_id, to_project_id, to_project_name, project_version, project_type):
+        from_project = Project.objects.get(project_id=from_project_id)
 
         # create new project if it doesn't exist yet
-        destination_project, created = Project.objects.get_or_create(
-            project_id=to_project_id,
-            project_name=to_project_name)
-
+        to_project, created = Project.objects.get_or_create(
+            project_id=to_project_id)
+        to_project.project_name = to_project_name
         if created:
-            destination_project.created_date=timezone.now()
-            destination_project.save()
+            print("Created project: %s" % to_project.project_id)
+            to_project.created_date=timezone.now()
+        else:
+            print("Retrieved project: %s" % to_project.project_id)
 
+        if from_project.description:
+            print("Setting description to: " + from_project.description)
+            to_project.description = from_project.description
 
-        # Transfer Family and Individuals
+        if from_project.project_status:
+            print("Setting project_status to: " + from_project.project_status)
+            to_project.project_status = from_project.project_status
 
-
-        # Project
-        # Family
-        # Individual
-        # VariantCallset
-
-        #python2.7 -u manage.py add_individuals_to_project %(project_id)s " +  ("--ped %(ped)s" if ped else "--vcf %(vcf)s"),
-        #python2.7 -u manage.py add_vcf_to_project %(project_id)s %(vcf)s",
-        #"python2.7 -u manage.py add_project_to_phenotips %(project_id)s '%(project_name)s' ",
-        #"python2.7 -u manage.py add_individuals_to_phenotips %(project_id)s --ped %(ped)s ",
-        #"python2.7 -u manage.py generate_pedigree_images %(project_id)s",
-        #"python2.7 -u manage.py load_project %(project_id)s" + (" --force-annotations --force-clean " if opts.force else ""),
-        #"python2.7 -u manage.py load_project_datastore %(project_id)s",
-
-        """
-        The following models are transfered between projects.
-
-        ProjectCollaborator => user = models.ForeignKey(User), project = models.ForeignKey('base.Project'), collaborator_type = models.CharField(max_length=20, choices=COLLABORATOR_TYPES, default="collaborator")
-        Project => (private_reference_populations = models.ManyToManyField(ReferencePopulation), gene_lists = models.ManyToManyField('gene_lists.GeneList', through='ProjectGeneList'))
-        Family => Project,
-        FamilyGroup => Project   (families = models.ManyToManyField(Family))
-        FamilyImageSlide => Family
-        Cohort => Project  (individuals = models.ManyToManyField('base.Individual'), vcf_files, bam_file)
-        Individual => Project, Family  # vcf_files = models.ManyToManyField(VCFFile, null=True, blank=True), bam_file = models.ForeignKey('datasets.BAMFile', null=True, blank=True)
-        CausalVariant => Family
-        ProjectTag => Project
-        VariantTag => ProjectTag, Family
-        VariantNote => User, Project
-        """
-
-        # Project
-        from_project = Project.objects.get(project_id=from_project_id)
-        to_project = Project.objects.get(project_id=to_project_id)
-        to_project.description = from_project.description
         to_project.save()
 
+
         # ProjectCollaborator
-        for c in ProjectCollaborator.objects.filter(project=from_project):
-            ProjectCollaborator.objects.get_or_create(project=to_project, user=c.user, collaborator_type=c.collaborator_type)
+        #for c in ProjectCollaborator.objects.filter(project=from_project):
+        #    ProjectCollaborator.objects.get_or_create(project=to_project, user=c.user, collaborator_type=c.collaborator_type)
 
-        # Reference Populations
-        for reference_population in from_project.private_reference_populations.all():
-            print("Adding private reference population: " + reference_population.slug)
-            to_project.private_reference_populations.add(reference_population)
-            to_project.save()
-
-        # Family
-        to_family_id_to_family = {} # maps family_id to the to_family object
-        for from_f in Family.objects.filter(project=from_project):
-            try:
-                to_f = Family.objects.get(project=to_project, family_id=from_f.family_id)
-                print("Matched family ids %s (%s) to %s (%s)" % (from_f.family_id, from_f.short_description, to_f.family_id, to_f.short_description)) 
-            except Exception as e:
-                print("WARNING - skipping family: " + from_f.family_id + ": " + str(e))
+        # Reference Populations - add ones that haven't been added previously
+        for from_project_ref_pop in from_project.private_reference_populations.all():
+            if any([1 for to_project_ref_pop in to_project.private_reference_populations.all() if to_project_ref_pop.id == from_project_ref_pop.id]):
                 continue
 
+            print("Adding private reference population: " + from_project_ref_pop.slug)
+            to_project.private_reference_populations.add(from_project_ref_pop)
+            to_project.save()
+
+        # GeneLists
+        for from_project_gene_list in from_project.gene_lists.all():
+            if any([1 for to_project_gene_list in to_project.gene_lists.all() if to_project_gene_list.id == from_project_gene_list.id]):
+                continue
+
+            print("Adding private reference population: " + from_project_gene_list.slug)
+            to_project.gene_lists.add(from_project_gene_list)
+            to_project.save()
+
+        # TODO - transfer PhenoTips
+
+        # Family
+        to_family_id_to_family = {}  # maps family_id to the to_family object
+        for from_f in Family.objects.filter(project=from_project):
+            to_f, created = Family.objects.get_or_create(project=to_project, family_id=from_f.family_id)
+
             to_family_id_to_family[to_f.family_id] = to_f
+
+            if created:
+                print("Created family %s" % (to_f.family_id,))
+
             to_f.family_name = from_f.family_name
-            to_f.short_description = from_f.short_description
-            to_f.about_family_content = from_f.about_family_content
-            to_f.pedigree_image_height = from_f.pedigree_image_height
-            to_f.pedigree_image_width = from_f.pedigree_image_width
-            to_f.analysis_status = from_f.analysis_status
-            to_f.causal_inheritance_mode = from_f.causal_inheritance_mode
-            to_f.relatedness_matrix_json = from_f.relatedness_matrix_json
-            to_f.variant_stats_json = from_f.variant_stats_json
-            to_f.has_before_load_qc_error = from_f.has_before_load_qc_error
-            to_f.before_load_qc_json = from_f.before_load_qc_json
-            to_f.has_after_load_qc_error = from_f.has_after_load_qc_error
-            to_f.has_after_load_qc_error = from_f.has_after_load_qc_error
-            to_f.after_load_qc_json = from_f.after_load_qc_json 
+            if from_f.short_description: to_f.short_description = from_f.short_description
+
+            if from_f.about_family_content: to_f.about_family_content = from_f.about_family_content
+            if from_f.analysis_summary_content: to_f.analysis_summary_content = from_f.analysis_summary_content
+
+            if from_f.pedigree_image:
+                to_f.pedigree_imate = from_f.pedigree_image
+                to_f.pedigree_image_height = from_f.pedigree_image_height
+                to_f.pedigree_image_width = from_f.pedigree_image_width
+
+            if from_f.analysis_status != "Q" or from_f.analysis_status_date_saved:
+                to_f.analysis_status = from_f.analysis_status
+                to_f.analysis_status_date_saved = from_f.analysis_status_date_saved
+                to_f.analysis_status_saved_by = from_f.analysis_status_saved_by
+
+            if from_f.causal_inheritance_mode != "unknown":
+                to_f.causal_inheritance_mode = from_f.causal_inheritance_mode
+
             to_f.save()
 
         # FamilyGroup
         for from_fg in FamilyGroup.objects.filter(project=from_project):
             FamilyGroup.objects.get_or_create(project=to_project, slug=from_fg.slug, name=from_fg.name, description=from_fg.description)
 
-        # FamilyImageSlide
-        #for from_family in Family.objects.filter(project=from_project):
-        # TODO - need to iterate over image slides of from_family, and link to image slides of to_family
-        #        FamilyImageSlide.objects.get_or_create(family=to_family, )
-            
-        
-        # Cohort
-        #cohorts = list(Cohort.objects.filter(project=project))
-        #output_obj += cohorts
-
         # Individual
-        for from_family in Family.objects.filter(project=from_project):
-            if not from_family.family_id in to_family_id_to_family:
-                print("WARNING - skipping family: " + from_family.family_id)
-                continue
 
+        """
+        guid = models.SlugField(max_length=165, unique=True, db_index=True)
+        indiv_id = models.SlugField(max_length=140, default="", blank=True, db_index=True)
+        family = models.ForeignKey(Family, null=True, blank=True)
+        project = models.ForeignKey(Project, null=True, blank=True)
+
+        sex = models.CharField(max_length=1, choices=SEX_CHOICES, default='U')
+        affected = models.CharField(max_length=1, choices=AFFECTED_CHOICES, default='U')
+        maternal_id = models.SlugField(max_length=140, default="", blank=True)
+        paternal_id = models.SlugField(max_length=140, default="", blank=True)
+
+        nickname = models.CharField(max_length=140, default="", blank=True)
+        other_notes = models.TextField(default="", blank=True, null=True)
+
+        mean_target_coverage = models.FloatField(null=True, blank=True)
+        coverage_status = models.CharField(max_length=1, choices=COVERAGE_STATUS_CHOICES, default='S')
+
+        coverage_file = models.CharField(max_length=200, default="", blank=True)
+        exome_depth_file = models.CharField(max_length=200, default="", blank=True)
+        vcf_files = models.ManyToManyField(VCFFile, blank=True)
+        bam_file_path = models.CharField(max_length=1000, default="", blank=True)
+
+        vcf_id = models.CharField(max_length=40, default="", blank=True)  # ID in VCF files, if different
+        """
+
+        transfer_phenotips_ids = (raw_input("Transfer PhenoTips ids? [Y/n] ").lower() == 'y')
+        for from_family in Family.objects.filter(project=from_project):
             to_family = to_family_id_to_family[from_family.family_id]
             for from_i in Individual.objects.filter(project=from_project, family=from_family):
                 try:
                     to_i = Individual.objects.get(project=to_project, family=to_family, indiv_id=from_i.indiv_id)
-                except:
-                    print("WARNING - skipping individual: " + str(from_i.indiv_id) + " in family " + from_family.family_id) 
-                    continue
-                to_i.nickname = from_i.nickname
+                except Exception as e:
+                    to_i = Individual.objects.create(guid= project=to_project, family=to_family, indiv_id=from_i.indiv_id)
+
+                if created:
+                    to_i.nickname = from_i.nickname
+
+                if transfer_phenotips_ids:
+                to_i.phenotips_id = from_i.phenotips_id
+
                 to_i.other_notes = from_i.other_notes
                 to_i.save()
-            
-            for from_v in CausalVariant.objects.filter(family=from_family):
-                CausalVariant.objects.get_or_create(
-                    family = to_family,
-                    variant_type=from_v.variant_type,
-                    xpos=from_v.xpos,
-                    ref=from_v.ref,
-                    alt=from_v.alt)
+
 
         for from_vn in VariantNote.objects.filter(project=from_project):
             if from_vn.family.family_id not in to_family_id_to_family:
                 print("Skipping note: " + str(from_vn.toJSON()))
                 continue
+
             to_family = to_family_id_to_family[from_vn.family.family_id]
             VariantNote.objects.get_or_create(
                 project=to_project,
@@ -159,12 +164,8 @@ class Command(BaseCommand):
             
         for from_ptag in ProjectTag.objects.filter(project=from_project):
             to_ptag, created = ProjectTag.objects.get_or_create(project=to_project, tag=from_ptag.tag, title=from_ptag.title, color=from_ptag.color)
+
             for from_vtag in VariantTag.objects.filter(project_tag=from_ptag):
-                if from_vtag.family.family_id not in to_family_id_to_family:
-                    print("Skipping tag: " + str(from_vtag.xpos))
-                    continue
-
-
                 to_family = to_family_id_to_family[from_vtag.family.family_id]
                 VariantTag.objects.get_or_create(
                     family=to_family,
@@ -174,9 +175,15 @@ class Command(BaseCommand):
                     alt=from_vtag.alt)
 
 
-        for project_gene_list in ProjectGeneList.objects.filter(project=from_project):
-            project_gene_list, created = ProjectGeneList.objects.get_or_create(project=to_project, gene_list=project_gene_list.gene_list)
 
+        # FamilyImageSlide
+        #for from_family in Family.objects.filter(project=from_project):
+        # TODO - need to iterate over image slides of from_family, and link to image slides of to_family
+        #        FamilyImageSlide.objects.get_or_create(family=to_family, )
+
+        # Cohort
+        #cohorts = list(Cohort.objects.filter(project=project))
+        #output_obj += cohorts
 
     def handle(self, *args, **options):
         source_project_id = options["source"]
@@ -189,4 +196,4 @@ class Command(BaseCommand):
         if raw_input("Continue? [Y/n] ").lower() != 'y':
             return
 
-        self.transfer_project(source_project_id, destination_project_id, destination_project_name, project_version, project_type)
+        self.add_project(source_project_id, destination_project_id, destination_project_name, project_version, project_type)
