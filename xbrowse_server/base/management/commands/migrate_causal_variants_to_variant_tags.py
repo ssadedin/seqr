@@ -78,7 +78,7 @@ class Command(BaseCommand):
             #                          keywords=["review"], color='#ffbf00')
 
             causal_variant_tag = get_or_create_project_tag(project, new_tag_name="Causal Variant", description="causal variant", keywords=["causal"], color='#1f78b4' )
-            
+
             # create a VariantTag for each CausalVariant record
             for causal_variant in CausalVariant.objects.all():
                 if causal_variant.family.project != project:
