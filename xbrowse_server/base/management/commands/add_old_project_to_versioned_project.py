@@ -1,8 +1,9 @@
 from django.core.management.base import BaseCommand
-from xbrowse_server.base.models import Project, ProjectCollaborator, Project, \
-    Family, Individual, FamilyGroup, CausalVariant, ProjectTag, VariantTag, VariantNote, ProjectGeneList
+from xbrowse_server.base.models import Project, Family, Individual, FamilyGroup, ProjectTag, VariantTag, VariantNote, \
+    VariantCallset, VariantCallsetSample, ProjectGeneList
 from django.utils import timezone
-
+from xbrowse_server.phenotips.utilities import convert_external_id_to_internal_id, create_user_in_phenotips, \
+    get_uname_pwd_for_project, add_user_to_phenotips_patient, PatientNotFoundError, create_patient_record
 
 class Command(BaseCommand):
     """Takes a project like my_project_WGS_v1 and copies the underlying data into a project like
@@ -13,11 +14,11 @@ class Command(BaseCommand):
         parser.add_argument('-s', '--source-project', help="project id from which to take the data and metadata", required=True)
         parser.add_argument('-d', '--destination-project', help="project id to which to add the data", required=True)
         parser.add_argument('-n', '--destination-project-name', help="project name", required=True)
-        parser.add_argument('-v', '--version', help="source project version", type=float, required=True)
+        #parser.add_argument('-v', '--version', help="source project version", type=float, required=True)
         parser.add_argument('-t', '--type', help="source project type: WGS or WEX", choices=("WGS", "WEX"), required=True)
 
 
-    def add_project(self, from_project_id, to_project_id, to_project_name, project_version, project_type):
+    def add_project(self, from_project_id, to_project_id, to_project_name, project_type):
         from_project = Project.objects.get(project_id=from_project_id)
 
         # create new project if it doesn't exist yet
@@ -38,6 +39,7 @@ class Command(BaseCommand):
             print("Setting project_status to: " + from_project.project_status)
             to_project.project_status = from_project.project_status
 
+        to_project.supports_versions = True  # enable versions
         to_project.save()
 
 
@@ -57,13 +59,13 @@ class Command(BaseCommand):
         # GeneLists
         for from_project_gene_list in from_project.gene_lists.all():
             if any([1 for to_project_gene_list in to_project.gene_lists.all() if to_project_gene_list.id == from_project_gene_list.id]):
-                continue
+                continue  # skip if this gene list has already been added
 
-            print("Adding private reference population: " + from_project_gene_list.slug)
-            to_project.gene_lists.add(from_project_gene_list)
-            to_project.save()
+            project_gene_list, created = ProjectGeneList.objects.get_or_create(project=to_project, gene_list=from_project_gene_list)
+            if created:
+                print("Added gene list: " + from_project_gene_list.slug)
 
-        # TODO - transfer PhenoTips
+                #project_gene_list.save()
 
         # Family
         to_family_id_to_family = {}  # maps family_id to the to_family object
@@ -100,52 +102,79 @@ class Command(BaseCommand):
         for from_fg in FamilyGroup.objects.filter(project=from_project):
             FamilyGroup.objects.get_or_create(project=to_project, slug=from_fg.slug, name=from_fg.name, description=from_fg.description)
 
-        # Individual
+        # Create PhenoTips username for this project
+        #create_new_phenotips_account = (raw_input("Create new PhenoTips account for %s? [Y/n] " % to_project_id).lower() == 'y')
+        #if create_new_phenotips_account:
+        #    create_user_in_phenotips(to_project_id, to_project_name)
 
-        """
-        guid = models.SlugField(max_length=165, unique=True, db_index=True)
-        indiv_id = models.SlugField(max_length=140, default="", blank=True, db_index=True)
-        family = models.ForeignKey(Family, null=True, blank=True)
-        project = models.ForeignKey(Project, null=True, blank=True)
+        # Datasets
+        to_dataset, created = VariantCallset.objects.get_or_create(dataset_id=to_project_id, sequencing_type=project_type)
+        if created:
+            print("Created new VariantCallset: " + to_project_id)
 
-        sex = models.CharField(max_length=1, choices=SEX_CHOICES, default='U')
-        affected = models.CharField(max_length=1, choices=AFFECTED_CHOICES, default='U')
-        maternal_id = models.SlugField(max_length=140, default="", blank=True)
-        paternal_id = models.SlugField(max_length=140, default="", blank=True)
+        #to_dataset.mongo_gene_search_coll = ""
 
-        nickname = models.CharField(max_length=140, default="", blank=True)
-        other_notes = models.TextField(default="", blank=True, null=True)
-
-        mean_target_coverage = models.FloatField(null=True, blank=True)
-        coverage_status = models.CharField(max_length=1, choices=COVERAGE_STATUS_CHOICES, default='S')
-
-        coverage_file = models.CharField(max_length=200, default="", blank=True)
-        exome_depth_file = models.CharField(max_length=200, default="", blank=True)
-        vcf_files = models.ManyToManyField(VCFFile, blank=True)
-        bam_file_path = models.CharField(max_length=1000, default="", blank=True)
-
-        vcf_id = models.CharField(max_length=40, default="", blank=True)  # ID in VCF files, if different
-        """
-
-        transfer_phenotips_ids = (raw_input("Transfer PhenoTips ids? [Y/n] ").lower() == 'y')
+        # Individuals
+        vcf_files = set()
         for from_family in Family.objects.filter(project=from_project):
             to_family = to_family_id_to_family[from_family.family_id]
             for from_i in Individual.objects.filter(project=from_project, family=from_family):
                 try:
                     to_i = Individual.objects.get(project=to_project, family=to_family, indiv_id=from_i.indiv_id)
                 except Exception as e:
-                    to_i = Individual.objects.create(guid= project=to_project, family=to_family, indiv_id=from_i.indiv_id)
+                    to_i = Individual.objects.create(project=to_project, family=to_family, indiv_id=from_i.indiv_id)
 
-                if created:
-                    to_i.nickname = from_i.nickname
+                to_i.indiv_id = from_i.indiv_id
+                to_i.family = to_family
+                to_i.project = to_project
 
-                if transfer_phenotips_ids:
                 to_i.phenotips_id = from_i.phenotips_id
+                to_i.vcf_id = from_i.vcf_id
 
+                to_i.sex = from_i.sex
+                to_i.affected = from_i.affected
+                to_i.maternal_id = from_i.maternal_id
+                to_i.paternal_id = from_i.paternal_id
+
+                to_i.nickname = from_i.nickname
                 to_i.other_notes = from_i.other_notes
+
+                to_i.mean_target_coverage = from_i.mean_target_coverage
+                to_i.coverage_status = from_i.coverage_status
+
+                for vcf_file in from_i.vcf_files.all():
+                    vcf_files.add(vcf_file.file_path)
+
+                #to_i.vcf_files = from_i.vcf_files...
+                to_i.bam_file_path = from_i.bam_file_path
                 to_i.save()
 
 
+                # set up permissions for the associated record in PhenoTips
+                uname, pwd = get_uname_pwd_for_project(to_project_id, read_only=False)
+                try:
+                    #patient_id = convert_external_id_to_internal_id(to_i.phenotips_id, uname, pwd)
+                    pass
+                except PatientNotFoundError as e:
+                    print("%s: Creating phenotips patient for phenotips_id: %s " % (to_project_id, to_i.phenotips_id))
+                    create_patient_record(to_i.phenotips_id, to_project_id, patient_details={'gender': to_i.sex})
+                else:
+                    # add manager user
+                    #add_user_to_phenotips_patient(uname, patient_id, read_only=False)
+                    # add read-only user
+                    uname, pwd = get_uname_pwd_for_project(to_project_id, read_only=True)
+                    #add_user_to_phenotips_patient(uname, patient_id, read_only=True)
+
+                # create dataset sample record
+                variant_callset, created = VariantCallsetSample.objects.get_or_create(variant_callset=to_dataset, individual=to_i)
+                if created:
+                    print("Created new VariantCallsetSample for: " + to_i.indiv_id)
+                variant_callset.mean_target_coverage = to_i.mean_target_coverage
+                variant_callset.coverage_status = to_i.coverage_status
+
+                variant_callset.bam_file_path = to_i.bam_file_path
+
+        # variant tags
         for from_vn in VariantNote.objects.filter(project=from_project):
             if from_vn.family.family_id not in to_family_id_to_family:
                 print("Skipping note: " + str(from_vn.toJSON()))
@@ -186,14 +215,14 @@ class Command(BaseCommand):
         #output_obj += cohorts
 
     def handle(self, *args, **options):
-        source_project_id = options["source"]
-        destination_project_id = options["destination"]
+        source_project_id = options["source_project"]
+        destination_project_id = options["destination_project"]
         destination_project_name = options["destination_project_name"]
-        project_version = options["version"]
+        #project_version = options["version"]
         project_type = options["type"]
 
         print("Transferring data from project %s to %s" % (source_project_id, destination_project_id))
         if raw_input("Continue? [Y/n] ").lower() != 'y':
             return
 
-        self.add_project(source_project_id, destination_project_id, destination_project_name, project_version, project_type)
+        self.add_project(source_project_id, destination_project_id, destination_project_name, project_type)

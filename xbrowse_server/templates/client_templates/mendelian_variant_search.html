@@ -1,5 +1,23 @@
 <script type="text/template" id="tpl-mendelian-variant-search-form">
-    <h3 class="section-header">Search Method</h3>
+
+
+    <div class="section-header">
+
+        {%  if True or project.supports_dataset_version %}
+            <div class="row">
+                <div class="col-md-3">
+                    <h3>Search Method</h3>
+                </div>
+                <div class="col-md-6" style="padding-top:30px">
+                    Dataset Version: &nbsp;
+                    <select id="dataset_verison">
+                        <option value="wgs|20">Whole Genome: v20</option>
+                        <option value="wex|10">Exome: v10</option>
+                    </select>
+                </div>
+            </div>
+        {% endif %}
+    </div>
     <div>
         <div class="row">
             <div class="col-md-3">
