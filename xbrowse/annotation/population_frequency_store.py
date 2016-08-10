@@ -206,7 +206,7 @@ class PopulationFrequencyStore():
                 try:
                     ac = int(variant.extras.get(ac_info_key).split(',')[alt_allele_pos].replace("NA", "0"))
                 except Exception, e:
-                    print("Couldn't parse AC value %s from %s: %s" % (alt_allele_pos, ac_info_key, variant.extras), e)
+                    print("Couldn't parse AC value for alt allele index %s from %s: %s" % (alt_allele_pos, ac_info_key, variant.extras, e))
                     continue
 
                 try:
