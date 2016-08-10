@@ -29,8 +29,8 @@ def create_patient_record(external_id, project_id, patient_details=None):
     if result is not None and result.status_code == 200:
         print 'successfully created or updated patient', external_id
         patient_id = convert_external_id_to_internal_id(external_id, uname, pwd)
-        collaborator_username, collab_pwd = get_uname_pwd_for_project(project_id, read_only=True)
-        add_read_only_user_to_phenotips_patient(collaborator_username, patient_id)
+        uname, pwd = get_uname_pwd_for_project(project_id, read_only=True)
+        add_user_to_phenotips_patient(uname, patient_id, read_only=True)
     else:
         print 'error creating patient', external_id, ':', result
 
@@ -125,7 +125,7 @@ def get_names_for_user(project_name, read_only=False):
     do_authenticated_POST(admin_uname, admin_pwd, url, data, headers)
 
 
-def add_read_only_user_to_phenotips_patient(username, patient_id):
+def add_user_to_phenotips_patient(username, patient_id, read_only=True):
     """
     Adds a non-owner phenotips-user to an existing patient. Requires an existing phenotips-user username, patient_eid (PXXXX..).
     Please note: User creation happens ONLY in method "add_new_user_to_phenotips". While this method
@@ -137,7 +137,7 @@ def add_read_only_user_to_phenotips_patient(username, patient_id):
     headers = {"Content-Type": "application/x-www-form-urlencoded"}
     data = {'collaborator': 'XWiki.' + username,
             'patient': patient_id,
-            'accessLevel': 'view',
+            'accessLevel': 'view' if read_only else 'manage',
             'xaction': 'update',
             'submit': 'Update'}
     url = settings.PHENOPTIPS_HOST_NAME + '/bin/get/PhenoTips/PatientAccessRightsManagement?outputSyntax=plain'
@@ -265,7 +265,7 @@ def add_individuals_to_phenotips(project_id, individual_ids=None):
             patient_id = convert_external_id_to_internal_id(indiv.phenotips_id, uname, pwd)
         except PatientNotFoundError as e:
             print("%s: Creating phenotips patient for phenotips_id: %s " % (project_id, indiv.phenotips_id))
-            create_patient_record(indiv.phenotips_id, project_id, patient_details={'gender': indiv.gender})
+            create_patient_record(indiv.phenotips_id, project_id, patient_details={'gender': indiv.sex})
 
 
 def add_individuals_with_details_to_phenotips(individual_details, project_id):
