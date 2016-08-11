@@ -38,8 +38,6 @@ from xbrowse_server.mall import get_reference
 from xbrowse_server import mall
 from xbrowse_server.gene_lists.views import download_response as gene_list_download_response
 from xbrowse_server.phenotips.reporting_utilities import get_phenotype_entry_metrics_for_project
-#from xbrowse_server.phenotips.reporting_utilities import categorize_phenotype_counts
-#from xbrowse_server.phenotips.reporting_utilities import aggregate_phenotype_counts_into_bins
 from xbrowse_server.decorators import log_request
 import logging
 
@@ -62,30 +60,12 @@ def project_home(request, project_id):
         auth_level = 'public'
     elif project.can_view(request.user):
         auth_level = 'viewer'
-
     else:
         raise Exception("Authx - how did we get here?!?")
-
-    #phenotips_supported=False
-    #if not (settings.PROJECTS_WITHOUT_PHENOTIPS is None or project_id in settings.PROJECTS_WITHOUT_PHENOTIPS):
-    #  phenotips_supported=True
     
     phenotips_supported=True
     if settings.PROJECTS_WITHOUT_PHENOTIPS is not None and project_id in settings.PROJECTS_WITHOUT_PHENOTIPS:
           phenotips_supported=False
-
-    #indiv_phenotype_counts=[]
-    #binned_counts={}
-    #categorized_phenotype_counts={}
-    #if phenotips_supported:
-    #  try:
-    #    indiv_phenotype_counts= get_phenotype_entry_metrics_for_project(project_id)
-    #    binned_counts=aggregate_phenotype_counts_into_bins(indiv_phenotype_counts)
-    #    categorized_phenotype_counts=categorize_phenotype_counts(binned_counts)
-    #  except Exception as e:
-    #    print 'error looking for project information in PhenoTips:logging & moving,there might not be any data'
-    #    logger.error('project_views:'+str(e))
-
     return render(request, 'project.html', {
         'phenotips_supported':phenotips_supported,
         'project': project,
@@ -300,6 +280,18 @@ def delete_individuals(request, project_id):
 
     for individual in to_delete:
         individual.delete()
+
+    try:
+        settings.EVENTS_COLLECTION.insert({
+                'event_type': 'delete_individuals',
+                'date': timezone.now(),
+                'project_id': project_id,
+                'individuals': ", ".join([i.indiv_id for i in to_delete]),
+                'username': request.user.username,
+                'email': request.user.email,
+        })
+    except Exception as e:
+        logging.error("Error while logging add_variant_tag event: %s" % e)
 
     if error:
         return server_utils.JSONResponse({'is_error': True, 'error': error})
