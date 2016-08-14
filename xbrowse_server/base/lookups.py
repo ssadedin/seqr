@@ -52,21 +52,3 @@ def get_variants_by_tag(project, tag_slug):
     variants = get_variants_from_variant_tuples(project, tag_tuples)
     return variants
 
-
-def get_causal_variants_for_project(project):
-    variant_t_list = [(v.xpos, v.ref, v.alt, v.family.family_id) for v in CausalVariant.objects.filter(family__project=project)]
-    variants = []
-    for xpos, ref, alt, family_id in variant_t_list:
-        variant = get_datastore(project.project_id).get_single_variant(
-            project.project_id,
-            family_id,
-            xpos,
-            ref,
-            alt
-        )
-        if variant:
-            variant.set_extra('family_id', family_id)
-            variant.set_extra('project_id', project.project_id)
-            variants.append(variant)
-
-    return variants
