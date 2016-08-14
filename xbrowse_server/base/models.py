@@ -81,8 +81,8 @@ COLLABORATOR_TYPES = (
 
 
 class ProjectCollaborator(models.Model):
-    user = models.ForeignKey(User)
-    project = models.ForeignKey('base.Project')
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    project = models.ForeignKey('base.Project', on_delete=models.CASCADE)
     collaborator_type = models.CharField(max_length=20, choices=COLLABORATOR_TYPES, default="collaborator")
 
 
@@ -107,7 +107,7 @@ class Project(models.Model):
     project_id = models.SlugField(max_length=140, default="", blank=True, unique=True)
 
     # these are user specified; only exist in the server
-    project_name = models.CharField(max_length=140, default="", blank=True)
+    project_name = models.CharField(max_length=140, default="", blank=True)  # TODO rename this to display_name
     description = models.TextField(blank=True, default="")
     project_status = models.CharField(max_length=50, choices=PROJECT_STATUS_CHOICES, null=True)
 
@@ -325,8 +325,8 @@ class Project(models.Model):
 
 
 class ProjectGeneList(models.Model):
-    gene_list = models.ForeignKey('gene_lists.GeneList')
-    project = models.ForeignKey(Project)
+    gene_list = models.ForeignKey('gene_lists.GeneList', on_delete=models.CASCADE)
+    project = models.ForeignKey(Project, on_delete=models.CASCADE)
 
 
 ANALYSIS_STATUS_CHOICES = (
@@ -345,23 +345,24 @@ ANALYSIS_STATUS_CHOICES = (
 
 class Family(models.Model):
 
-    project = models.ForeignKey(Project, null=True, blank=True)
+    project = models.ForeignKey(Project, null=True, blank=True, on_delete=models.SET_NULL)
     family_id = models.CharField(max_length=140, default="", blank=True)
-    family_name = models.CharField(max_length=140, default="", blank=True)  # human-readable family name
-
-    short_description = models.CharField(max_length=500, default="", blank=True)
-
-    about_family_content = models.TextField(default="", blank=True)
-    analysis_summary_content = models.TextField(default="", blank=True)
 
     pedigree_image = models.ImageField(upload_to='pedigree_images', null=True, blank=True,
         height_field='pedigree_image_height', width_field='pedigree_image_width')
     pedigree_image_height = models.IntegerField(default=0, blank=True, null=True)
     pedigree_image_width = models.IntegerField(default=0, blank=True, null=True)
 
+    # project-specific metadata
+    family_name = models.CharField(max_length=140, default="", blank=True)  # TODO rename this to display_name
+    short_description = models.CharField(max_length=500, default="", blank=True)
+
+    about_family_content = models.TextField(default="", blank=True)
+    analysis_summary_content = models.TextField(default="", blank=True)
+
     analysis_status = models.CharField(max_length=10, choices=ANALYSIS_STATUS_CHOICES, default="Q")
     analysis_status_date_saved = models.DateTimeField(null=True)
-    analysis_status_saved_by = models.ForeignKey(User, null=True, blank=True)
+    analysis_status_saved_by = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL)
 
     causal_inheritance_mode = models.CharField(max_length=20, default="unknown")
 
@@ -544,14 +545,14 @@ class Family(models.Model):
 
 
 class FamilyImageSlide(models.Model):
-    family = models.ForeignKey(Family)
+    family = models.ForeignKey(Family, on_delete=models.CASCADE)
     image = models.ImageField(upload_to='family_image_slides', null=True, blank=True)
     order = models.FloatField(default=0.0)
     caption = models.CharField(max_length=300, default="", blank=True)
 
 
 class Cohort(models.Model):
-    project = models.ForeignKey(Project, null=True, blank=True)
+    project = models.ForeignKey(Project, null=True, blank=True, on_delete=models.CASCADE)
     cohort_id = models.CharField(max_length=140, default="", blank=True)
     display_name = models.CharField(max_length=140, default="", blank=True)
     short_description = models.CharField(max_length=140, default="", blank=True)
@@ -655,29 +656,31 @@ class Individual(models.Model):
     # global unique id for this individual (<date>_<time_with_millisec>_<indiv_id>)
     guid = models.SlugField(max_length=165, unique=True, db_index=True)
     indiv_id = models.SlugField(max_length=140, default="", blank=True, db_index=True)
-    family = models.ForeignKey(Family, null=True, blank=True)
-    project = models.ForeignKey(Project, null=True, blank=True)
-
     phenotips_id = models.SlugField(max_length=165, default="", blank=True)  # PhenoTips 'external id'
-    vcf_id = models.CharField(max_length=40, default="", blank=True)  # ID in VCF files, if different
 
+    project = models.ForeignKey(Project, null=True, blank=True, on_delete=models.SET_NULL)
+    family = models.ForeignKey(Family, null=True, blank=True, on_delete=models.SET_NULL)
+
+    paternal_id = models.SlugField(max_length=140, default="", blank=True)
+    maternal_id = models.SlugField(max_length=140, default="", blank=True)
     sex = models.CharField(max_length=1, choices=SEX_CHOICES, default='U')
     affected = models.CharField(max_length=1, choices=AFFECTED_CHOICES, default='U')
-    maternal_id = models.SlugField(max_length=140, default="", blank=True)
-    paternal_id = models.SlugField(max_length=140, default="", blank=True)
 
-    nickname = models.CharField(max_length=140, default="", blank=True)
+    # project-specific metadata
+    nickname = models.CharField(max_length=140, default="", blank=True) # TODO - rename this to display_name
     other_notes = models.TextField(default="", blank=True, null=True)
-
-    mean_target_coverage = models.FloatField(null=True, blank=True)
-    coverage_status = models.CharField(max_length=1, choices=COVERAGE_STATUS_CHOICES, default='S')
-
-    vcf_files = models.ManyToManyField(VCFFile, blank=True)
-    bam_file_path = models.CharField(max_length=1000, default="", blank=True)
-
 
     # inferred_ancestry
     # inferred_sex
+
+    # DEPRECATED - the fields below should move to Dataset and Sample models
+    vcf_id = models.CharField(max_length=40, default="", blank=True)  # this should move to SequencingSample
+
+    mean_target_coverage = models.FloatField(null=True, blank=True) # this should move to SequencingSample
+    coverage_status = models.CharField(max_length=1, choices=COVERAGE_STATUS_CHOICES, default='S')  # this should move to SequencingSample
+
+    vcf_files = models.ManyToManyField(VCFFile, blank=True)  # this should move to SequencingDataset
+    bam_file_path = models.CharField(max_length=1000, default="", blank=True)  # this should move to SequencingSample
 
     def __unicode__(self):
         ret = self.indiv_id
@@ -835,8 +838,8 @@ class Individual(models.Model):
         }
 
 
-class VariantCallsetSample(models.Model):
-    """Variant callset sample. One record per sample in a callset."""
+class SequencingSample(models.Model):
+    """Sequencing dataset sample"""
 
     COVERAGE_STATUS_CHOICES = (
         ('S', 'In Sequencing'),
@@ -845,16 +848,15 @@ class VariantCallsetSample(models.Model):
         ('A', 'Abandoned'),  # sample failed sequencing
     )
 
-    individual = models.ForeignKey('Individual')
-    variant_callset = models.ForeignKey('VariantCallset')
-    #sample_info = models.ForeignKey('SequencedSampleInfo')
+    sample_id = models.CharField(max_length=140)
+
+    individual = models.ForeignKey('Individual', null=True, on_delete=models.SET_NULL)
+    sequencing_dataset = models.ForeignKey('SequencingDataset', on_delete=models.PROTECT)
 
     mean_target_coverage = models.FloatField(null=True, blank=True)
     coverage_status = models.CharField(max_length=1, choices=COVERAGE_STATUS_CHOICES, default='S')
 
-    bam_file_path = models.CharField(max_length=1000, default="", blank=True)
-
-    #vcf_id = models.CharField(max_length=40, default="", blank=True)   # sample id in the VCF file if different from indiv_id.
+    bam_file_path = models.TextField(null=True, blank=True)  # relative file path
 
 
     ## picard metrics
@@ -891,15 +893,34 @@ class VariantCallsetSample(models.Model):
     GC_DROPOUT = models.FloatField(null=True, blank=True)
 
 
+class ArraySample(models.Model):
+    individual = models.ForeignKey('Individual', null=True, on_delete=models.SET_NULL)
+    array_dataset = models.ForeignKey('ArrayDataset', on_delete=models.PROTECT)
+
+    cnv_bed_file_path = models.TextField(null=True, blank=True)   # relative path of the CNV file
+
+
 class Dataset(models.Model):
     """Parent class for dataset models"""
 
-    #guid = models.SlugField(max_length=165, unique=True, db_index=True)
+    dataset_id = models.SlugField(max_length=140, unique=True, db_index=True)
+    display_name = models.TextField(null=True, blank=True)
 
     created_date = models.DateTimeField(null=True, blank=True)  # this is used instead of a version
     loaded_date = models.DateTimeField(null=True, blank=True)
 
-    #original_path = models.TextField(null=True, blank=True)   # file or url from which the data was loaded
+    def is_loaded(self):
+        return self.loaded_date is not None
+
+
+class SequencingDataset(Dataset):
+    """Represents a batch of sequencing samples."""
+
+    individuals = models.ManyToManyField(Individual, through='SequencingSample')
+
+    vcf_file_path = models.TextField(null=True, blank=True)   # file or url from which the data was loaded
+
+    stored_in_hail = models.BooleanField(default=False)
 
     SEQUENCING_TYPE_CHOICES = (
         ('WES', 'Exome'),
@@ -908,76 +929,26 @@ class Dataset(models.Model):
 
     sequencing_type = models.CharField(max_length=3, choices=SEQUENCING_TYPE_CHOICES)
 
-    vcf_files = models.ManyToManyField(VCFFile, blank=True)
 
+class ArrayDataset(Dataset):
+    ARRAY_TYPE_CHOICES = (
+        ('ILLUMINA_INFINIUM_250K', 'Illumina_Infinium_250k'),
+    )
 
-class VariantCallset(Dataset):
-    """Represents a variant callset. One record per callset."""
-    dataset_id = models.SlugField(max_length=140, default="", blank=True, db_index=True)
+    individuals = models.ManyToManyField(Individual, through='ArraySample')
 
-    individuals = models.ManyToManyField(Individual, through='VariantCallsetSample')
+    array_type = models.CharField(max_length=50, choices=ARRAY_TYPE_CHOICES)
 
-    mongo_gene_search_coll = models.CharField(max_length=100, null=True, blank=True)   # mongodb xbrowse_datastore collection used for project name
 
 #class SequencedSampleInfo(models.Model):
 #    """Sequenced sample information that's independent of sample version, but does depend on sequencing_type"""
-
-
-class FamilySearchFlag(models.Model):
-
-    FLAG_TYPE_CHOICES = (
-        ('C', 'Likely causal'),
-        ('R', 'Flag for review'),
-        ('N', 'Other note'),
-    )
-
-    user = models.ForeignKey(User, null=True, blank=True)
-    family = models.ForeignKey(Family, null=True, blank=True)
-
-    xpos = models.BigIntegerField()
-    ref = models.TextField()
-    alt = models.TextField()
-
-    flag_type = models.CharField(max_length=1, choices=FLAG_TYPE_CHOICES)
-    suggested_inheritance = models.SlugField(max_length=40, default="")
-
-    # REMOVE
-    search_spec_json = models.TextField(default="", blank=True)
-    date_saved = models.DateTimeField()
-    note = models.TextField(default="", blank=True)
-
-    def search_spec(self):
-        return json.loads(self.search_spec_json)
-
-    def to_dict(self):
-        return {
-            'username': self.user.username,
-            'display_name': self.user.profile.display_name,
-            'project_id': self.family.project.project_id,
-            'family_id': self.family.family_id,
-            'xpos': self.xpos,
-            'ref': self.ref,
-            'alt': self.alt,
-            'flag_type': self.flag_type,
-            'flag_type_display': dict(FamilySearchFlag.FLAG_TYPE_CHOICES).get(self.flag_type),
-            'search_spec_json': self.search_spec_json,
-            'note': self.note,
-            'date_saved': pretty.date(self.date_saved) if self.date_saved is not None else '',
-        }
-
-    def to_json(self):
-        return json.dumps(self.to_dict())
-
-    def x_variant(self):
-        v = get_datastore(self.family.project.project_id).get_single_variant(self.family.project.project_id, self.family.family_id, self.xpos, self.ref, self.alt)
-        return v
 
 
 class FamilyGroup(models.Model):
     slug = models.SlugField(max_length=100)
     name = models.CharField(max_length=100)
     description = models.TextField()
-    project = models.ForeignKey(Project)
+    project = models.ForeignKey(Project, on_delete=models.CASCADE)
     families = models.ManyToManyField(Family)
 
     def __unicode__(self):
@@ -1003,7 +974,7 @@ class FamilyGroup(models.Model):
 
 
 class ProjectTag(models.Model):
-    project = models.ForeignKey(Project)
+    project = models.ForeignKey(Project, null=True, on_delete=models.SET_NULL)
     tag = models.CharField(max_length=50)
     title = models.CharField(max_length=300, default="")
     color = models.CharField(max_length=10, default="")
@@ -1043,19 +1014,11 @@ class ProjectTag(models.Model):
             return self.varianttag_set.all()
 
 
-class CausalVariant(models.Model):
-    family = models.ForeignKey(Family, null=True)
-    variant_type = models.CharField(max_length=10, default="")
-    xpos = models.BigIntegerField(null=True)
-    ref = models.TextField(null=True)
-    alt = models.TextField(null=True)
-
-
 class VariantTag(models.Model):
     user = models.ForeignKey(User, null=True, blank=True)
     date_saved = models.DateTimeField(null=True)
 
-    project_tag = models.ForeignKey(ProjectTag)
+    project_tag = models.ForeignKey(ProjectTag, on_delete=models.CASCADE)
     family = models.ForeignKey(Family, null=True)
     xpos = models.BigIntegerField()
     ref = models.TextField()
@@ -1089,7 +1052,7 @@ class VariantTag(models.Model):
 
 
 class VariantNote(models.Model):
-    project = models.ForeignKey(Project)
+    project = models.ForeignKey(Project, null=True, on_delete=models.SET_NULL)
     note = models.TextField(default="", blank=True)
 
     xpos = models.BigIntegerField()
@@ -1097,10 +1060,10 @@ class VariantNote(models.Model):
     alt = models.TextField()
 
     # these are for context - if note was saved for a family or an individual
-    family = models.ForeignKey(Family, null=True, blank=True)
-    individual = models.ForeignKey(Individual, null=True, blank=True)
+    family = models.ForeignKey(Family, null=True, blank=True, on_delete=models.SET_NULL)
+    individual = models.ForeignKey(Individual, null=True, blank=True, on_delete=models.SET_NULL)
 
-    user = models.ForeignKey(User, null=True, blank=True)
+    user = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL)
     date_saved = models.DateTimeField()
     search_url = models.TextField(null=True)
 
@@ -1141,9 +1104,72 @@ class VariantNote(models.Model):
         return d
 
 
+
+
+### DEPRECATED - replaced by VariantTag and ProjectTag
+class FamilySearchFlag(models.Model):
+
+    FLAG_TYPE_CHOICES = (
+        ('C', 'Likely causal'),
+        ('R', 'Flag for review'),
+        ('N', 'Other note'),
+    )
+
+    user = models.ForeignKey(User, null=True, blank=True, on_delete=models.CASCADE)
+    family = models.ForeignKey(Family, null=True, blank=True, on_delete=models.CASCADE)
+
+    xpos = models.BigIntegerField()
+    ref = models.TextField()
+    alt = models.TextField()
+
+    flag_type = models.CharField(max_length=1, choices=FLAG_TYPE_CHOICES)
+    suggested_inheritance = models.SlugField(max_length=40, default="")
+
+    # REMOVE
+    search_spec_json = models.TextField(default="", blank=True)
+    date_saved = models.DateTimeField()
+    note = models.TextField(default="", blank=True)
+
+    def search_spec(self):
+        return json.loads(self.search_spec_json)
+
+    def to_dict(self):
+        return {
+            'username': self.user.username,
+            'display_name': self.user.profile.display_name,
+            'project_id': self.family.project.project_id,
+            'family_id': self.family.family_id,
+            'xpos': self.xpos,
+            'ref': self.ref,
+            'alt': self.alt,
+            'flag_type': self.flag_type,
+            'flag_type_display': dict(FamilySearchFlag.FLAG_TYPE_CHOICES).get(self.flag_type),
+            'search_spec_json': self.search_spec_json,
+            'note': self.note,
+            'date_saved': pretty.date(self.date_saved) if self.date_saved is not None else '',
+        }
+
+    def to_json(self):
+        return json.dumps(self.to_dict())
+
+    def x_variant(self):
+        v = get_datastore(self.family.project.project_id).get_single_variant(self.family.project.project_id, self.family.family_id, self.xpos, self.ref, self.alt)
+        return v
+
+
+### Deprecated - using "Causal" VariantTag instead
+class CausalVariant(models.Model):
+    family = models.ForeignKey(Family, null=True, on_delete=models.SET_NULL)
+    variant_type = models.CharField(max_length=10, default="")
+    xpos = models.BigIntegerField(null=True)
+    ref = models.TextField(null=True)
+    alt = models.TextField(null=True)
+
+
+### Deprecated - fields moved to Family model for simplicity
 class AnalysisStatus(models.Model):
-    user = models.ForeignKey(User, null=True, blank=True)
+    user = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL)
     date_saved = models.DateTimeField(null=True)
-    family = models.ForeignKey(Family)
+    family = models.ForeignKey(Family, on_delete=models.CASCADE)
     status = models.CharField(max_length=10, choices=ANALYSIS_STATUS_CHOICES, default="I")
 
