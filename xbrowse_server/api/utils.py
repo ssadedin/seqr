@@ -5,8 +5,7 @@ from django.http import Http404
 
 import sys
 from xbrowse.analysis_modules.combine_mendelian_families import get_families_by_gene
-from xbrowse_server.base.models import Project, Family, Cohort, FamilyGroup, VariantNote, VariantTag, \
-    CausalVariant
+from xbrowse_server.base.models import Project, Family, Cohort, FamilyGroup, VariantNote, VariantTag
 from xbrowse_server.analysis import population_controls
 from xbrowse import genomeloc
 from xbrowse import stream_utils
