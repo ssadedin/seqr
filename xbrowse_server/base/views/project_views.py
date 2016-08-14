@@ -26,8 +26,7 @@ from xbrowse_server.gene_lists.forms import GeneListForm
 from xbrowse_server.gene_lists.models import GeneList, GeneListItem
 from xbrowse_server.base.models import ProjectGeneList
 from xbrowse_server.decorators import log_request
-from xbrowse_server.base.lookups import get_all_saved_variants_for_project, get_variants_with_notes_for_project, \
-    get_variants_by_tag, get_causal_variants_for_project
+from xbrowse_server.base.lookups import get_all_saved_variants_for_project, get_variants_by_tag
 from xbrowse_server.api.utils import add_extra_info_to_variants_family, add_extra_info_to_variants_project
 from xbrowse_server.base import forms as base_forms
 from xbrowse_server import user_controls
