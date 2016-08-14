@@ -79,8 +79,6 @@ def validate_fam_file(fam_file):
         if i.paternal_id and i.paternal_id != '.':
             indiv_to_pat_id[i.indiv_id] = i.paternal_id
         indiv_to_sex[i.indiv_id] = i.sex
-            indiv_to_pat_id[indiv_id] = i.paternal_id
-        indiv_to_sex[indiv_id] = i.gender
 
     print("Validating %d individuals in %d families" % (len(indiv_to_family_id), len(set(indiv_to_family_id.values()))))
 
