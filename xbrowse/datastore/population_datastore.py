@@ -1,7 +1,5 @@
 from xbrowse.datastore import MongoDatastore
 from xbrowse import Individual, Cohort
-from xbrowse.parsers import vcf_stuff
-
 
 class PopulationDatastore(MongoDatastore):
 

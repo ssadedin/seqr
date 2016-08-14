@@ -2,8 +2,7 @@ from django.core.management.base import BaseCommand
 from xbrowse_server.base.models import Project, Family, Individual, FamilyGroup, ProjectTag, VariantTag, VariantNote, \
     VariantCallset, VariantCallsetSample, ProjectGeneList
 from django.utils import timezone
-from xbrowse_server.phenotips.utilities import convert_external_id_to_internal_id, create_user_in_phenotips, \
-    get_uname_pwd_for_project, add_user_to_phenotips_patient, PatientNotFoundError, create_patient_record
+from xbrowse_server.phenotips.utilities import get_uname_pwd_for_project, PatientNotFoundError, create_patient_record
 
 class Command(BaseCommand):
     """Takes a project like my_project_WGS_v1 and copies the underlying data into a project like
@@ -79,7 +78,6 @@ class Command(BaseCommand):
 
             to_f.family_name = from_f.family_name
             if from_f.short_description: to_f.short_description = from_f.short_description
-
             if from_f.about_family_content: to_f.about_family_content = from_f.about_family_content
             if from_f.analysis_summary_content: to_f.analysis_summary_content = from_f.analysis_summary_content
 
@@ -119,10 +117,10 @@ class Command(BaseCommand):
         for from_family in Family.objects.filter(project=from_project):
             to_family = to_family_id_to_family[from_family.family_id]
             for from_i in Individual.objects.filter(project=from_project, family=from_family):
-                try:
-                    to_i = Individual.objects.get(project=to_project, family=to_family, indiv_id=from_i.indiv_id)
-                except Exception as e:
-                    to_i = Individual.objects.create(project=to_project, family=to_family, indiv_id=from_i.indiv_id)
+
+                to_i, created = Individual.objects.get_or_create(project=to_project, family=to_family, indiv_id=from_i.indiv_id)
+                if created:
+                    print("Created individual: " + from_i.indiv_id)
 
                 to_i.indiv_id = from_i.indiv_id
                 to_i.family = to_family
@@ -148,7 +146,6 @@ class Command(BaseCommand):
                 #to_i.vcf_files = from_i.vcf_files...
                 to_i.bam_file_path = from_i.bam_file_path
                 to_i.save()
-
 
                 # set up permissions for the associated record in PhenoTips
                 uname, pwd = get_uname_pwd_for_project(to_project_id, read_only=False)
