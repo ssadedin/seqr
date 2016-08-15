@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand
 from xbrowse_server.base.models import Project, Family, Individual, FamilyGroup, ProjectTag, VariantTag, VariantNote, \
-    VariantCallset, VariantCallsetSample, ProjectGeneList
+    SequencingDataset, SequencingSample, ProjectGeneList
 from django.utils import timezone
 from xbrowse_server.phenotips.utilities import get_uname_pwd_for_project, PatientNotFoundError, create_patient_record
 
@@ -106,7 +106,7 @@ class Command(BaseCommand):
         #    create_user_in_phenotips(to_project_id, to_project_name)
 
         # Datasets
-        to_dataset, created = VariantCallset.objects.get_or_create(dataset_id=to_project_id, sequencing_type=project_type)
+        to_dataset, created = SequencingDataset.objects.get_or_create(dataset_id=to_project_id, sequencing_type=project_type)
         if created:
             print("Created new VariantCallset: " + to_project_id)
 
@@ -163,13 +163,13 @@ class Command(BaseCommand):
                     #add_user_to_phenotips_patient(uname, patient_id, read_only=True)
 
                 # create dataset sample record
-                variant_callset, created = VariantCallsetSample.objects.get_or_create(variant_callset=to_dataset, individual=to_i)
+                sequencing_sample, created = SequencingSample.objects.get_or_create(variant_callset=to_dataset, individual=to_i)
                 if created:
                     print("Created new VariantCallsetSample for: " + to_i.indiv_id)
-                variant_callset.mean_target_coverage = to_i.mean_target_coverage
-                variant_callset.coverage_status = to_i.coverage_status
+                sequencing_sample.mean_target_coverage = to_i.mean_target_coverage
+                sequencing_sample.coverage_status = to_i.coverage_status
 
-                variant_callset.bam_file_path = to_i.bam_file_path
+                sequencing_sample.bam_file_path = to_i.bam_file_path
 
         # variant tags
         for from_vn in VariantNote.objects.filter(project=from_project):
