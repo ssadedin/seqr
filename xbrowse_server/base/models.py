@@ -125,7 +125,7 @@ class Project(models.Model):
     collaborators = models.ManyToManyField(User, blank=True, through='ProjectCollaborator')
     is_public = models.BooleanField(default=False)
 
-    supports_versions = models.BooleanField(default=False)  # temporary field for migrating to Datasets with versions
+    supports_datasets = models.BooleanField(default=False)  # temporary field for migrating to Datasets with versions
 
     def __unicode__(self):
         return self.project_name if self.project_name != "" else self.project_id
