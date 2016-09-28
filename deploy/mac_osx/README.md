@@ -146,9 +146,9 @@ NOTE: root access may be required for the brew install commands.
    NOTE: VEP tends to run out of memory on large VCFs, so it's best to split the vcf into chuncks with 5000 or fewer variants in each,
   run VEP on each chunk in parallel, and then recombine. The [grabix](https://github.com/arq5x/grabix) indexing tool is very helpful for the splitting step because it lets you extract an arbitrary range of lines from the vcf, and these can be piped directly into VEP. 
   
-0. Once you have an annotated file, it can be loaded the same way as steps 6 to 8 in the 'Load example data' section. 
-
-
+0. Once you have an annotated file, it can be loaded by creating a project for the sample(s) and then proceeding 
+   with similar steps to 6 to 8 in the 'Load example data' section. See the [data loading instructions](../../../docs/adding_data.md) for 
+   more details.
 
 ## Production Environment
 
