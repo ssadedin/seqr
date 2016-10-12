@@ -68,6 +68,9 @@ window.IndividualListTable = Backbone.View.extend({
         // affected
         m.set('affected', form_fields.filter('[data-key="affected"]').val());
 
+        // review status
+        m.set('review_status', form_fields.filter('[data-key="review_status"]').val());
+
     },
 
     get_selected_samples: function() {

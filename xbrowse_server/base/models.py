@@ -647,11 +647,21 @@ class Individual(models.Model):
         ('U', 'Unknown'),
     )
 
+
     COVERAGE_STATUS_CHOICES = (
         ('S', 'In Sequencing'),
         ('I', 'Interim'),
         ('C', 'Complete'),
         ('A', 'Abandoned'),
+    )
+
+    REVIEW_STATUS_CHOICES = (
+        ('A', 'Accepted'),
+        ('E', 'Accepted - Exome'),
+        ('G', 'Accepted - Genome'),
+        ('R', 'Not Accepted'),
+        ('N', 'See Notes'),
+        ('H', 'Hold'),
     )
 
     # global unique id for this individual (<date>_<time_with_millisec>_<indiv_id>)
@@ -669,6 +679,8 @@ class Individual(models.Model):
 
     # project-specific metadata
     nickname = models.CharField(max_length=140, default="", blank=True) # TODO - rename this to display_name
+    review_status = models.CharField(max_length=1, choices=REVIEW_STATUS_CHOICES, blank=True, null=True, default='')
+
     other_notes = models.TextField(default="", blank=True, null=True)
 
     # inferred_ancestry
@@ -735,6 +747,7 @@ class Individual(models.Model):
             'affected': str(self.affected),
             'maternal_id': str(self.maternal_id),
             'paternal_id': str(self.paternal_id),
+            'review_status': str(self.review_status),
             'has_variants': self.has_variant_data(),  # can we remove?
             'other_notes': self.other_notes,
         }

@@ -26,6 +26,7 @@ def individual_list(_individual_list):
             'sex': indiv.sex,
             'affected_status': indiv.affected,
             'mean_target_coverage': indiv.mean_target_coverage,
+            'review_status': indiv.review_status,
             'coverage_status': indiv.coverage_status,
             'data': indiv.data(),
         })
