@@ -1,7 +1,7 @@
 import constants
 from .classes import CoverageInterval
 
-from xbrowse import genomeloc
+from xbrowse.core import genomeloc
 
 
 def iterate_coverage_bed_file(bed_file):
