@@ -151,11 +151,18 @@ def parse_vep_annotations_from_vcf(vcf_file_obj):
     for line in vcf_file_obj:
         if line.startswith("#CHROM"):
             break
-        if "CSQ" in line:
+        if "CSQ" or "ANN" in line:
             csq_header_line = line
 
     if csq_header_line is None:
         raise ValueError("CSQ field not found in %s header" % vcf_file_obj)
+
+
+    ann_field = None
+    if "CSQ" in csq_header_line:
+        ann_field = "CSQ"
+    elif "ANN" in csq_header_line:
+        ann_field = "ANN"
 
     csq_field_names = csq_header_line.split("Format: ")[1].split("|")
     csq_field_names = map(lambda s: s.lower(), csq_field_names)
@@ -173,21 +180,21 @@ def parse_vep_annotations_from_vcf(vcf_file_obj):
         filter_field = vcf_row_fields[6]
         info_field = vcf_row_fields[7]
         info_field_dict = dict([tuple(key_value.split("=")) if "=" in key_value else (key_value, '') for key_value in info_field.split(";")])
-        if "CSQ" not in info_field_dict:
+        if ann_field not in info_field_dict:
             missing_csq_counter += 1
             if total_sites_counter > 10000 and missing_csq_counter / float(total_sites_counter) > 0.2:
-                raise Exception("%d out of %d vcf rows processed so far are missing the CSQ INFO field. Something probably went wrong with VEP annotation." % (missing_csq_counter, total_sites_counter))
+                raise Exception("%d out of %d vcf rows processed so far are missing the %s INFO field. Something probably went wrong with VEP annotation." % (missing_csq_counter, total_sites_counter, ann_field))
             else:
                 continue  # Skip the occasional sites where, due to subsetting, the alt allele is *
         
         vep_annotations = defaultdict(list)  # map allele num to vep annotation
-        for i, per_transcript_csq_string in enumerate(info_field_dict['CSQ'].split(",")):
+        for i, per_transcript_csq_string in enumerate(info_field_dict[ann_field].split(",")):
             csq_values = per_transcript_csq_string.split('|')
 
             # sanity-check the csq_values
             if len(csq_values) != len(csq_field_names):
-                raise ValueError("CSQ per-transcript string %s contains %s values instead of %s:\n%s" % (
-                    i, len(csq_values), len(csq_field_names), per_transcript_csq_string))
+                raise ValueError("%s per-transcript string %s contains %s values instead of %s:\n%s" % (
+                    ann_field, i, len(csq_values), len(csq_field_names), per_transcript_csq_string))
 
             vep_annotation = dict(zip(csq_field_names, csq_values))
             vep_annotation['is_nmd'] = "NMD_transcript_variant" in csq_values
