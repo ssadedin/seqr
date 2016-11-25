@@ -24,6 +24,7 @@ class Command(BaseCommand):
 
         gene_id_to_mim_id = {}
         gene_mim_id_to_phenotypes = defaultdict(list)
+        print("load from %s" %genemap_path)
         with open(genemap_path) as f:
             for line in f:
                 if not line or line.startswith("#"):

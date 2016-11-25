@@ -211,6 +211,9 @@ def load_project_variants(project_id, force_load_annotations=False, force_load_v
     project = Project.objects.get(project_id=project_id)
 
     for vcf_obj in sorted(project.get_all_vcf_files(), key=lambda v:v.path()):
+        
+        print "Reading VCF %s" % vcf_obj.path()
+        
         r = vcf.VCFReader(filename=vcf_obj.path())
         if not ignore_csq_in_vcf and "CSQ" not in r.infos and "ANN" not in r.infos:
             raise ValueError("VEP annotations not found in VCF: " + vcf_obj.path())
@@ -220,6 +223,9 @@ def load_project_variants(project_id, force_load_annotations=False, force_load_v
 
     # batch load families by VCF file
     for vcf_file, families in project.families_by_vcf().items():
+        
+        print "Families are: %s" % ",".join(f.family_id for f in families)
+        
         if not force_load_variants:
             # filter out families that have already finished loading
             families = [f for f in families if get_mall(project.project_id).variant_store.get_family_status(project_id, f.family_id) != 'loaded']
