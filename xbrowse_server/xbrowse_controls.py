@@ -179,7 +179,14 @@ def load_project_variants_from_vcf(project_id, vcf_files, mark_as_loaded=True, s
     for vcf_file in vcf_files:
         
         r = vcf.VCFReader(filename=vcf_file)
-        if "CSQ" not in r.infos:
+        
+        ann_field = None
+        if "CSQ" in r.infos:
+            ann_field = "CSQ"
+        elif "ANN" in r.infos:
+            ann_field = "ANN"
+        
+        if ann_field is None:
             raise ValueError("VEP annotations not found in VCF: " + vcf_file)
         
         if vcf_file in vcf_files:
@@ -210,7 +217,7 @@ def load_project_variants(project_id, force_load_annotations=False, force_load_v
 
     for vcf_obj in sorted(project.get_all_vcf_files(), key=lambda v:v.path()):
         r = vcf.VCFReader(filename=vcf_obj.path())
-        if not ignore_csq_in_vcf and "CSQ" not in r.infos:
+        if not ignore_csq_in_vcf and "CSQ" not in r.infos and "ANN" not in r.infos:
             raise ValueError("VEP annotations not found in VCF: " + vcf_obj.path())
 
         mall.get_annotator().add_preannotated_vcf_file(vcf_obj.path(), force=force_load_annotations)

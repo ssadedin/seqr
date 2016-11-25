@@ -32,6 +32,9 @@ class Command(BaseCommand):
             print("")
             sys.exit(1)
 
+        if len(args)<2:
+            raise Exception("Too few arguments: please provide project path")
+        
         project_dir = os.path.abspath(args[1])
         project_yaml_file = os.path.join(project_dir, 'project.yaml')
 
