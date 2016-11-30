@@ -46,7 +46,7 @@ class Command(BaseCommand):
         vcf_files = args[3:]
         if(len(vcf_files) > 0):
             vcfs = [ vcf.Reader(open(vcf_file,'r')) for vcf_file in vcf_files ]
-            samples = [ avcf.samples for avcf in vcfs ].sum()
+            samples = sum([ avcf.samples for avcf in vcfs ],[])
             print "Found samples in VCF files: " + ",".join(samples)
         else:
             vcfs = []
