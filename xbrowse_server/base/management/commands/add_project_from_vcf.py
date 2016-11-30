@@ -24,7 +24,7 @@ class Command(BaseCommand):
           a case where there is a single PED file and multiple VCFs, and these fully describe
           the project.
 
-          print 'Example: python manage.py add_project_from_vcf 1kg 1kg.ped 1kg_1.vcf 1kg_2.vcf ...\n'
+          print 'Example: python manage.py add_project_from_vcf 1kg "My awesome project" 1kg.ped 1kg_1.vcf 1kg_2.vcf ...\n'
 
           """
           sys.exit()
@@ -46,7 +46,7 @@ class Command(BaseCommand):
         vcf_files = args[3:]
         if(len(vcf_files) > 0):
             vcfs = [ vcf.Reader(open(vcf_file,'r')) for vcf_file in vcf_files ]
-            samples = [ vcf.samples for vcf in vcfs ].sum()
+            samples = [ avcf.samples for avcf in vcfs ].sum()
             print "Found samples in VCF files: " + ",".join(samples)
         else:
             vcfs = []
