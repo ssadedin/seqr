@@ -350,4 +350,5 @@ else:
     SECRET_KEY = "~~~ this key string is FOR DEVELOPMENT USE ONLY ~~~"
 
 
-
+# Database to store genomic breakpoints in (if any)
+BREAKPOINT_DATABASE = None
