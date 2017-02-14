@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'reference_data',
     'seqr',
     'breakpoint_search',
+    'vcgs'
 
     # Other django plugins to try from https://djangopackages.org/
     #   django-extensions  (https://django-extensions.readthedocs.io/en/latest/installation_instructions.html)
@@ -190,6 +191,7 @@ TEMPLATES = [
         'DIRS': [
             os.path.dirname(os.path.realpath(__file__)) + '/ui/dist/',
             os.path.dirname(os.path.realpath(__file__)) + '/xbrowse_server/templates/',
+            os.path.dirname(os.path.realpath(__file__)) + '/vcgs/templates/',
         ],
         'APP_DIRS': True,
         'OPTIONS': {
@@ -371,6 +373,7 @@ from local_settings import *
 STATICFILES_DIRS = (
     os.path.dirname(os.path.realpath(__file__)) + '/xbrowse_server/staticfiles/',
     os.path.join(BASE_DIR, 'ui/dist/'),    # this is so django's collectstatic copies ui dist files to STATIC_ROOT
+    os.path.join(BASE_DIR, 'vcgs/staticfiles'),    
 )
 
 

@@ -198,6 +198,8 @@ urlpatterns = [
     # Breakpoint Search
     url(r'', include('breakpoint_search.urls')),
 
+    # VCGS
+    url(r'', include('vcgs.urls')),
 ]
 
 if settings.DEBUG:

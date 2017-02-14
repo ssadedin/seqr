@@ -1,0 +1,73 @@
+{% extends 'analysispage.html' %}
+
+{% load static from staticfiles %}
+
+{% block title %}VCGS Sequencing Files{% endblock %}
+
+{% block links %}
+{% endblock %}
+
+{% block desc %}
+    <p>
+        This page shows the status of sequencing files resulting from sequencing
+        operations at VCGS.
+    </p>
+{% endblock %}
+
+{% block innercontent %}
+
+    {% include 'family_warnings.html' %}
+    <script type="text/javascript">
+    window.PROJECT_OPTIONS = {};
+    </script>
+
+    <form id='csrf'>
+        {% csrf_token %}
+    </form>
+    
+    <div class="container">
+        <div id="form-container"></div>
+    </div>
+
+    <div class="container">
+        <div id="search-controls-container"></div>
+    </div>
+
+    <div class="container">
+        <div id="results-container"></div>
+    </div>
+
+    {% include 'javascript.html' %}
+    
+    <style type='text/css'>
+    td.vcfcol { text-align: center; }
+    tr.highlight, tr.highlighted, tr.highlight td.sorting_1 {
+        background-color: #ffeeee !important;
+    }
+    span.rightform {
+        float: right;
+        font-size: 85%;
+    }
+
+    span.rightform select {
+        font-size: 70%;
+        margin-right: 1.5em;
+    }
+    </style>
+
+    <script type="text/javascript">
+    window.PROJECT_OPTIONS = {};
+    </script>
+    
+    <div id=filesbody></div>
+
+    <script src="https://cdn.datatables.net/1.10.10/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.8.34/browser.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.10.10/css/jquery.dataTables.min.css"/>
+    <script src="https://fb.me/react-15.0.0.js"></script>
+    <script src="https://fb.me/react-dom-15.0.0.js"></script>    
+    <script type='text/babel' src='{% static "js/file_search.jsx" %}'></script>
+
+    <iframe style='display:none;' name='igv' id='igv' src='about:blank'></iframe>
+
+{% endblock %}
