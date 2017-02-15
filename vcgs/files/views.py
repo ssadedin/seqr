@@ -54,8 +54,12 @@ def get_files(request):
     if not project.can_view(request.user):
         raise PermissionDenied
     
-    files = [ f.toJSON() for f in SequencingFile.objects.all() ]
-        
+    files = []
+    for f in SequencingFile.objects.all():
+        m = f.toJSON()
+        m.update({"run_id":f.run.run_id}) 
+        files.append(m)
+    
 #     return HttpResponse("""{
 #         "files": %s,
 #     }""" % serializers.serialize("json",files), content_type='application/json') 
