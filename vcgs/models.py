@@ -38,6 +38,8 @@ class SequencingFile(models.Model):
     path = models.TextField(max_length=512, null=False, blank=False, unique=False)
     
     file_name = models.TextField(max_length=256, null=False, blank=False, unique=False)
+
+    user_name = models.TextField(max_length=256, null=False, blank=False, unique=False, default='')
     
     file_size = models.BigIntegerField(null=False)
     
@@ -55,6 +57,7 @@ class SequencingFile(models.Model):
             "file_name" : self.file_name,
             "file_size" : self.file_size,
             "content_type" : "text/fastq",
-            "created_date" : "2017-02-17 10:11:13"
+            "created_date" : "2017-02-17 10:11:13",
+            "user_name" : self.user_name
         }
     

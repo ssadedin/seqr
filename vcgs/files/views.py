@@ -96,6 +96,7 @@ def post_files(request):
         file.file_name = file_json['file_name']
         file.content_type = file_json['content_type']
         file.file_size = file_json['file_size']
+        file.user_name = file_json['user_name']
         file.run = run
         file.save()
         

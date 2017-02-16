@@ -6,7 +6,8 @@ var FileList = React.createClass({
              { key: 'file_name', name: 'Name' },
              { key: 'content_type', name: 'Type' },
              { key: 'file_size', name: 'File Size' },
-             { key: 'run_id', name: 'Run' } 
+             { key: 'run_id', name: 'Run' },
+             { key: 'user_name', name: 'User Name' }
          ]; 
         
         var me = this;
@@ -32,7 +33,8 @@ var FileList = React.createClass({
             file_name : f.file_name,
             content_type : f.content_type,
             file_size : f.file_size,
-            run_id : f.run_id
+            run_id : f.run_id,
+            user_name : f.user_name
         };
     },
     
