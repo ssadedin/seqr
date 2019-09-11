@@ -127,9 +127,9 @@ def deploy_init_cluster(settings):
     # create priority classes - " Priority affects scheduling order of Pods and out-of-resource eviction ordering
     # on the Node.... A PriorityClass is a non-namespaced object .. The higher the value, the higher the priority."
     # (from https://kubernetes.io/docs/concepts/configuration/pod-priority-preemption/#priorityclass)
-    run("kubectl create priorityclass medium-priority --value=1000" % settings, errors_to_ignore=["already exists"])
-    run("kubectl create priorityclass high-priority --value=10000" % settings, errors_to_ignore=["already exists"])
-
+    run("kubectl apply -f deploy/kubernetes/mediumpriority.yaml" % settings, errors_to_ignore=["already exists"])
+    run("kubectl apply -f deploy/kubernetes/highpriority.yaml " % settings, errors_to_ignore=["already exists"])
+    
     # print cluster info
     run("kubectl cluster-info", verbose=True)
 
@@ -474,7 +474,7 @@ def deploy_nginx(settings):
 
     print_separator("nginx")
 
-    run("kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/master/deploy/mandatory.yaml" % locals())
+    run("kubectl apply -f deploy/kubernetes/nginx/nginx-ingress.yaml" % locals())
 
     if settings["DELETE_BEFORE_DEPLOY"]:
         run("kubectl delete -f %(DEPLOYMENT_TEMP_DIR)s/deploy/kubernetes/nginx/nginx.yaml" % settings, errors_to_ignore=["not found"])
