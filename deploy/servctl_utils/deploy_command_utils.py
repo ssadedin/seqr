@@ -74,7 +74,8 @@ DEPLOYMENT_TARGETS["gcloud-prod"] = [
     "settings",
     "secrets",
     #"cockpit",
-    "external-mongo-connector",
+#     "external-mongo-connector",
+    "mongo",
     "matchbox",
     "nginx",
 
