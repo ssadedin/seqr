@@ -27,3 +27,16 @@ cp -v deploy/secrets/minikube/matchbox/nodes.json deploy/secrets/gcloud/matchbox
 cp -v deploy/secrets/minikube/matchbox/config.xml  deploy/secrets/gcloud/matchbox/config.xml 
 
 gcloud compute disks create --zone australia-southeast1-b --size 400 gcloud-dev-mongo-disk 
+
+gcloud compute disks create --zone australia-southeast1-b --size 20 gcloud-client-secrets-volume
+
+
+cd ~/seqr; echo 'apt-get install -y zip' | ./servctl shell pipeline-runner gcloud-dev
+
+echo "export SPARK_HOME='$HOME/spark-2.0.2-bin-hadoop2.7'" >> ~/.bashrc
+
+echo "Please make sure the spark / hadoop binaries are at $HOME/spark-2.0.2-bin-hadoop2.7"
+
+echo "TODO: This command needs the ip address of seqr service"
+
+gcloud compute firewall-rules create allowseqrelasticsearch --allow tcp:9200 --source-tags=seqr-test --source-ranges=10.47.248.181/32
