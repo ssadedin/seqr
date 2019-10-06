@@ -8,8 +8,9 @@ CLUSTER_NUM_NODES: 1
 KUBERNETES_VERSION: '1.11.2-gke.18'
 
 CLUSTER_EXTERNAL_IP: '35.194.17.244'
-CLUSTER_HOSTNAME: 'seqr.broadinstitute.org'
-BASE_URL: 'https://seqr.broadinstitute.org/'
+
+CLUSTER_HOSTNAME: 'seqr.mcri.edu.au'
+BASE_URL: 'https://seqr.mcri.edu.au:10000'
 
 MONGO_SERVICE_EXTERNAL_IP: 10.128.0.3  # broad-seqr
 MONGO_SERVICE_EXTERNAL_PORT: 27017
@@ -17,22 +18,21 @@ MONGO_SERVICE_EXTERNAL_PORT: 27017
 ELASTICSEARCH_SERVICE_EXTERNAL_IP: 10.16.0.3
 ELASTICSEARCH_SERVICE_EXTERNAL_PORT: 9200
 
-GCLOUD_PROJECT: 'seqr-project'
-GCLOUD_ZONE: 'us-central1-b'
+GCLOUD_PROJECT: 'mcri-01'
+GCLOUD_ZONE: 'australia-southeast1-b'
 
-SEQR_GIT_BRANCH: 'master'
+SEQR_GIT_BRANCH: 'feat-mcri-settings'
 
 ENABLE_DATABASE_BACKUPS: true
-DATABASE_BACKUP_BUCKET: seqr-backups
+DATABASE_BACKUP_BUCKET: mcri-seqr-backups
 
-GUNICORN_WORKER_THREADS: 20    # number of webserver threads
+GUNICORN_WORKER_THREADS: 8    # number of webserver threads
 
-SEQR_POD_MEMORY_LIMIT: 35Gi
-REDIS_POD_MEMORY_LIMIT: 10Gi
+SEQR_POD_MEMORY_LIMIT: 16Gi
+REDIS_POD_MEMORY_LIMIT: 8Gi
 PHENOTIPS_POD_MEMORY_LIMIT: 3Gi
 
-UPLOADED_PEDIGREE_FILE_RECIPIENTS: 'jchang@broadinstitute.org,larkin@broadinstitute.org'
-
+UPLOADED_PEDIGREE_FILE_RECIPIENTS: 'simon.sadedin@mcri.edu.au'
 
 ###########################################################
 ####### SETTINGS THAT SHOULDN'T NEED TO BE MODIFIED #######

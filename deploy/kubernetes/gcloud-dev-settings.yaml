@@ -3,14 +3,14 @@
 
 CLUSTER_NAME: 'gcloud-dev'
 CLUSTER_MACHINE_TYPE: 'n1-highmem-4'   # n1-standard-2, n1-standard-4 .. n1-standard-64,  n1-highmem-2, n1-highcpu-2 ..
-CLUSTER_NUM_NODES: 3
+CLUSTER_NUM_NODES: 1
 
 # KUBERNETES_VERSION: '1.11.2-gke.18'
 KUBERNETES_VERSION: '1.12.8-gke.10'
 
 CLUSTER_EXTERNAL_IP: '35.197.185.153'
-CLUSTER_HOSTNAME: 'seqr-dev.mcri.edu.au'
-BASE_URL: 'https://seqr-dev.mcri.edu.au'
+CLUSTER_HOSTNAME: 'seqr.mcri.edu.au'
+BASE_URL: 'https://seqr.mcri.edu.au:20000'
 
 MONGO_SERVICE_EXTERNAL_IP: 10.128.0.3  # broad-seqr
 MONGO_SERVICE_EXTERNAL_PORT: 27017
@@ -28,7 +28,7 @@ SEQR_SERVICE_NODE_PORT: 30003   # after deployment, seqr will be accessible at h
 GCLOUD_PROJECT: 'mcri-01'
 GCLOUD_ZONE: 'australia-southeast1-b'
 
-SEQR_GIT_BRANCH: 'master'
+SEQR_GIT_BRANCH: 'feat-mcri-settings'
 
 SEQR_POD_MEMORY_LIMIT: 15Gi
 REDIS_POD_MEMORY_LIMIT: 8Gi
