@@ -15,15 +15,6 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name='dbNSFPGene',
-            fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('gene_id', models.CharField(db_index=True, max_length=20)),
-                ('function_desc', models.TextField(blank=True, null=True)),
-                ('disease_desc', models.TextField(blank=True, null=True)),
-            ],
-        ),
-        migrations.CreateModel(
             name='GencodeGene',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
@@ -65,39 +56,6 @@ class Migration(migrations.Migration):
                 ('gencode_release', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='reference_data.GencodeRelease')),
                 ('gene', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='reference_data.GencodeGene')),
             ],
-        ),
-        migrations.CreateModel(
-            name='HumanPhenotypeOntology',
-            fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('hpo_id', models.CharField(db_index=True, max_length=20, unique=True)),
-                ('parent_id', models.CharField(blank=True, max_length=20, null=True)),
-                ('category_id', models.CharField(blank=True, db_index=True, max_length=50, null=True)),
-                ('is_category', models.BooleanField(db_index=True, default=False)),
-                ('name', models.TextField()),
-                ('definition', models.TextField(blank=True, null=True)),
-                ('comment', models.TextField(blank=True, null=True)),
-            ],
-        ),
-        migrations.CreateModel(
-            name='OMIM',
-            fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('mim_number', models.IntegerField()),
-                ('gene_id', models.CharField(db_index=True, max_length=20)),
-                ('gene_symbol', models.CharField(blank=True, max_length=20, null=True)),
-                ('gene_description', models.TextField(blank=True, max_length=20, null=True)),
-                ('comments', models.TextField(blank=True, null=True)),
-                ('phenotype_inheritance', models.TextField(blank=True, null=True)),
-                ('phenotype_mim_number', models.IntegerField(blank=True, null=True)),
-                ('phenotype_description', models.TextField(blank=True, null=True)),
-                ('phenotype_map_method', models.CharField(choices=[(b'1', b'the disorder is placed on the map based on its association with a gene, but the underlying defect is not known.'), (b'2', b'the disorder has been placed on the map by linkage; no mutation has been found.'), (b'3', b'the molecular basis for the disorder is known; a mutation has been found in the gene.'), (b'4', b'a contiguous gene deletion or duplication syndrome, multiple genes are deleted or duplicated causing the phenotype.')], max_length=1)),
-                ('date_downloaded', models.DateTimeField(auto_now_add=True)),
-            ],
-        ),
-        migrations.AlterUniqueTogether(
-            name='omim',
-            unique_together=set([('mim_number', 'phenotype_description')]),
         ),
         migrations.AddField(
             model_name='gencodegene',
