@@ -12,11 +12,11 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AlterField(
-            model_name='clinvar',
-            name='genome_build_id',
-            field=models.CharField(choices=[(b'37', b'GRCh37'), (b'38', b'GRCh38')], max_length=3),
-        ),
+#         migrations.AlterField(
+#             model_name='clinvar',
+#             name='genome_build_id',
+#             field=models.CharField(choices=[(b'37', b'GRCh37'), (b'38', b'GRCh38')], max_length=3),
+#         ),
         migrations.AlterField(
             model_name='gencoderelease',
             name='genome_build_id',
