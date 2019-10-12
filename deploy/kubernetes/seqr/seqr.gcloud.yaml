@@ -46,7 +46,8 @@ spec:
         - containerPort: {{ SEQR_SERVICE_PORT }}
           protocol: TCP
         imagePullPolicy: {{ IMAGE_PULL_POLICY }}
-        image: {{ DOCKER_IMAGE_PREFIX }}/seqr{{ DOCKER_IMAGE_TAG }}
+#        image: {{ DOCKER_IMAGE_PREFIX }}/seqr{{ DOCKER_IMAGE_TAG }}
+        image: gcr.io/mcri-01/mcri-seqr-09272018:latest
         securityContext:
           privileged: true
           capabilities:
