@@ -28,7 +28,8 @@ fi
 cd /seqr
 
 # git pull
-git checkout $SEQR_GIT_BRANCH
+
+git checkout mcri-runtime-master
 pip install --upgrade -r requirements.txt  # doublecheck that requirements are up-to-date
 python -u manage.py makemigrations
 python -u manage.py migrate

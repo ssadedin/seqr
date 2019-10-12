@@ -97,7 +97,7 @@ RUN curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s
 ARG DISABLE_CACHE=1
 
 # update seqr repo
-RUN git clone -q https://github.com/macarthur-lab/seqr
+RUN git clone -q https://github.com/ssadedin/seqr
 
 WORKDIR /seqr
 
