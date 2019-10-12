@@ -194,11 +194,11 @@ except IOError:
         logger.warn('Unable to generate {}: {}'.format(os.path.abspath(SECRET_FILE), e))
         SECRET_KEY = os.environ.get("DJANGO_KEY", "-placeholder-key-")
 
-if DEPLOYMENT_TYPE == DEPLOYMENT_TYPE_PROD:
-    SESSION_COOKIE_SECURE = True
-    CSRF_COOKIE_SECURE = True
-else:
-    DEBUG = True
+# if DEPLOYMENT_TYPE == DEPLOYMENT_TYPE_PROD:
+#     SESSION_COOKIE_SECURE = True
+#     CSRF_COOKIE_SECURE = True
+# else:
+DEBUG = True
 
 AUTHENTICATION_BACKENDS = (
     'django.contrib.auth.backends.ModelBackend',
