@@ -13,7 +13,9 @@ RUN apt-get update && apt-get install -y --fix-missing \
     less \
     nano \
     wget \
-    xterm
+    xterm \
+	screen \
+	openssh-server
 
 # install python
 RUN apt-get install -y python-dev \
