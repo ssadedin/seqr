@@ -18,8 +18,15 @@ def add_individuals_from_pedigree_file(project, pedigree_file_path, validate_onl
         raise CommandError("Can't open pedigree file: %(pedigree_file)s" % locals())
 
     # parse the pedigree file if specified
-    input_stream = file_iter(pedigree_file_path)
-    json_records, errors, warnings = parse_pedigree_table(pedigree_file_path, input_stream)
+
+
+#     json_records, errors, warnings = parse_pedigree_table(pedigree_file_path, input_stream)
+
+    with open(pedigree_file_path) as f:
+        lines = f.readlines()
+
+    rows = [line.split('\t') for line in lines]
+    json_records, errors, warnings = parse_pedigree_table(rows, pedigree_file_path)
 
     if errors:
         for message in errors:
