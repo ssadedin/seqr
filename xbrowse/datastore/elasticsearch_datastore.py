@@ -182,11 +182,14 @@ class ElasticsearchDatastore(datastore.Datastore):
                 indivs_to_consider = [i.indiv_id for i in individuals]
         prefetch_related_objects(individuals, "seqr_individual")
 
+        logger.info('Searching for samples using individuals: %s', list(i.seqr_individual.id for i in individuals if i.seqr_individual))
         samples = Sample.objects.filter(
             individual__in=[i.seqr_individual for i in individuals if i.seqr_individual],
             dataset_type=Sample.DATASET_TYPE_VARIANT_CALLS,
             sample_status=Sample.SAMPLE_STATUS_LOADED,
-            elasticsearch_index__startswith=False,
+#           This prevents custom sample id => individual mappings from working 
+#           Not clear to me what the meaning of it would ever be
+#             elasticsearch_index__startswith=False,
             loaded_date__isnull=False,
         ).order_by('-loaded_date')
         prefetch_related_objects(samples, "individual")
@@ -194,16 +197,21 @@ class ElasticsearchDatastore(datastore.Datastore):
         es_indices = [index.rstrip('*') for index in elasticsearch_index.split(',')]
 
         family_individual_ids_to_sample_ids = {}
+        
         for i in individuals:
             indiv_id = i.indiv_id
             sample_id = None
             if i.seqr_individual:
+                logger.info('Check for sample id for indiv_id=%s seqr_individual=%s samples=%s', indiv_id, i.seqr_individual, list(sample.sample_id for sample in samples))
+
                 sample_id = next((
                     sample.sample_id for sample in samples
                     if sample.individual == i.seqr_individual and sample.elasticsearch_index.startswith(*es_indices)
                 ), None)
             family_individual_ids_to_sample_ids[indiv_id] = sample_id or indiv_id
 
+        logger.info('Resolved individual-sample-map as: %s', family_individual_ids_to_sample_ids)
+       
         query_json = self._make_db_query(genotype_filter, variant_filter)
 
         try:
