@@ -47,8 +47,8 @@ def parse_saved_variant_json(apps, schema_editor):
             if 'populations' in variant.saved_variant_json:
                 main_transcript = variant.saved_variant_json.pop('mainTranscript')
                 variant.saved_variant_json['mainTranscriptId'] = main_transcript['transcriptId'] if main_transcript else None
-            else:
-                variant.saved_variant_json = _variant_details(variant.saved_variant_json, family_guids_by_id, individual_guids_by_id)
+#else:
+#                variant.saved_variant_json = _variant_details(variant.saved_variant_json, family_guids_by_id, individual_guids_by_id)
 
             variant.save()
     print('Saved variant json updated')
@@ -85,11 +85,11 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.RunPython(remove_missing_family_saved_variants, reverse_code=migrations.RunPython.noop),
-        migrations.AddField(
-            model_name='savedvariant',
-            name='selected_main_transcript_id',
-            field=models.CharField(max_length=20, null=True),
-        ),
+#migrations.AddField(
+#            model_name='savedvariant',
+#            name='selected_main_transcript_id',
+#            field=models.CharField(max_length=20, null=True),
+#        ),
         migrations.AlterField(
             model_name='savedvariant',
             name='family',
