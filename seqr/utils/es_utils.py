@@ -28,7 +28,7 @@ XPOS_SORT_KEY = 'xpos'
 
 
 def get_es_client(timeout=30):
-    return elasticsearch.Elasticsearch(host=settings.ELASTICSEARCH_SERVICE_HOSTNAME, timeout=timeout, retry_on_timeout=True)
+    return elasticsearch.Elasticsearch(hosts=[{"host": settings.ELASTICSEARCH_SERVICE_HOSTNAME, "port": settings.ELASTICSEARCH_PORT}],  timeout=timeout, retry_on_timeout=True)
 
 
 def get_index_metadata(index_name, client):
