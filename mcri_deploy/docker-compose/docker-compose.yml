@@ -60,7 +60,7 @@ services:
 
 
   seqr:
-    image: "gcr.io/mcri-01/${SEQR_IMAGE_NAME:-mcri-seqr:latest}"
+    image: "${SEQR_CONTAINER_REGISTRY:-gcr.io/mcri-01}/${SEQR_IMAGE_NAME:-mcri-seqr}:${SEQR_IMAGE_TAG:-latest}"
     ports:
       - 8000:8000
     environment:
