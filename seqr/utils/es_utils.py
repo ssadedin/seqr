@@ -28,7 +28,7 @@ XPOS_SORT_KEY = 'xpos'
 
 
 def get_es_client(timeout=30):
-    return elasticsearch.Elasticsearch(host=settings.ELASTICSEARCH_SERVICE_HOSTNAME, timeout=timeout, retry_on_timeout=True)
+    return elasticsearch.Elasticsearch(hosts=[{"host": settings.ELASTICSEARCH_SERVICE_HOSTNAME, "port": settings.ELASTICSEARCH_PORT}],  timeout=timeout, retry_on_timeout=True)
 
 
 def get_index_metadata(index_name, client):
@@ -278,7 +278,7 @@ class BaseEsSearch(object):
                         )
                         variant_id_genome_versions[lifted_variant_id] = lifted_genome_version
                         variant_ids.append(lifted_variant_id)
-        
+
         self.filter(_location_filter(genes, intervals, rs_ids, variant_ids, locus))
         if len({genome_version for genome_version in variant_id_genome_versions.items()}) > 1 and not (genes or intervals or rs_ids):
             self._filtered_variant_ids = variant_id_genome_versions
