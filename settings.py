@@ -304,7 +304,7 @@ MME_ADD_INDIVIDUAL_URL = MME_SERVER_HOST + '/patient/add'
 #deletes a patient from MME
 MME_DELETE_INDIVIDUAL_URL = MME_SERVER_HOST + '/patient/delete'
 #matches in local MME database ONLY, won't search in other MME nodes
-MME_LOCAL_MATCH_URL = MME_SERVER_HOST + '/match'      
+MME_LOCAL_MATCH_URL = MME_SERVER_HOST + '/match'
 #matches in EXTERNAL MME nodes ONLY, won't search in LOCAL MME database/node
 MME_EXTERNAL_MATCH_URL = MME_SERVER_HOST + '/match/external'
 #privileged/internal metrics URL
@@ -329,8 +329,10 @@ MEDIA_ROOT = os.path.join(GENERATED_FILES_DIR , 'media/')
 
 ALLOWED_HOSTS = ['*']
 
-EMAIL_BACKEND = "anymail.backends.postmark.EmailBackend"
-DEFAULT_FROM_EMAIL = "seqr@broadinstitute.org"
+EMAIL_BACKEND = os.environ.get("EMAIL_BACKEND", "anymail.backends.postmark.EmailBackend")
+EMAIL_HOST = os.environ.get("SMTP_EMAIL_HOST", "localhost")
+EMAIL_PORT = os.environ.get("SMTP_EMAIL_PORT", "1025")
+DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "seqr@broadinstitute.org")
 
 ANYMAIL = {
     #"SENDGRID_API_KEY": os.environ.get('SENDGRID_API_KEY', 'sendgrid-api-key-placeholder'),
