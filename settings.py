@@ -331,7 +331,7 @@ ALLOWED_HOSTS = ['*']
 
 EMAIL_BACKEND = os.environ.get("EMAIL_BACKEND", "anymail.backends.postmark.EmailBackend")
 EMAIL_HOST = os.environ.get("SMTP_EMAIL_HOST", "localhost")
-EMAIL_PORT = os.environ.get("SMTP_EMAIL_PORT", "1025")
+EMAIL_PORT = os.environ.get("SMTP_EMAIL_PORT", "10025")
 DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "seqr@broadinstitute.org")
 
 ANYMAIL = {
