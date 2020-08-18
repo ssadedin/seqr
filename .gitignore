@@ -15,3 +15,7 @@ deploy/secrets/gcloud*/*
 
 pedigree_images/*
 seqr_settings
+data
+
+docker-compose.*.env
+!docker-compose.sample.env
