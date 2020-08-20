@@ -60,8 +60,6 @@ services:
 
 
   seqr:
-    build:
-      context: ./deploy/docker/seqr
     image: "gcr.io/mcri-01/${SEQR_IMAGE_NAME:-mcri-seqr:latest}"
     ports:
       - 8000:8000
