@@ -1,4 +1,4 @@
-# MCRI Elastic Search Deployment
+# MCRI Elasticsearch Deployment
 
 This directory contains instructions and all deployment descriptors required
 for deploying Seqr's Elasticsearch instance at MCRI, hosted on Google Kubernetes Engine.
@@ -19,16 +19,15 @@ The K8 deployment descriptions still depend on the Docker containers originally 
 Use gcloud to create a new cluster.  This cluster is created with Gce CSI Driver, see [Using the Compute Engine persistent disk CSI Driver](https://cloud.google.com/kubernetes-engine/docs/how-to/persistent-volumes/gce-pd-csi-driver).
 
 ```bash
-export CLUSTER_NAME=seqr-prod-a
+export CLUSTER_NAME=seqr-cluster-prod-a
 
-gcloud beta container clusters create seqr-cluster-prod-a \
+gcloud beta container clusters create $CLUSTER_NAME \
   --zone=australia-southeast1-b \
   --num-nodes=1 \
   --cluster-version=1.16 \
   --machine-type=n1-highmem-4 \
   --enable-ip-alias \
-  --addons=GcePersistentDiskCsiDriver \
-  --enable-autoupgrade
+  --addons=GcePersistentDiskCsiDriver
 ```
 
 Above command should have also configured `kubectl` with authentication and use this new cluster as its default context.
@@ -97,5 +96,5 @@ The StatefulSet "es-data" is invalid: spec: Forbidden: updates to statefulset sp
 
 Below links provide more information.
 
-* [https://www.elastic.co/guide/en/cloud-on-k8s/current/k8s-orchestration.html#k8s-orchestration-limitations](https://www.elastic.co/guide/en/cloud-on-k8s/current/k8s-orchestration.html#k8s-orchestration-limitations)
-* [https://github.com/kubernetes/enhancements/issues/661](https://github.com/kubernetes/enhancements/issues/661)
+* [Elasticsearch Nodes orchestration limitations](https://www.elastic.co/guide/en/cloud-on-k8s/current/k8s-orchestration.html#k8s-orchestration-limitations)
+* [Support Volume Expansion Through StatefulSets](https://github.com/kubernetes/enhancements/issues/661)
