@@ -88,7 +88,7 @@ spec:
           terminationMessagePolicy: File
           volumeMounts:
             - mountPath: /data
-              name: storage
+              name: pvc-es-data
       dnsPolicy: ClusterFirst
       initContainers:
         - command:
@@ -113,13 +113,12 @@ spec:
     type: RollingUpdate
   volumeClaimTemplates:
     - metadata:
-        creationTimestamp: null
-        name: storage
+        name: pvc-es-data
       spec:
         accessModes:
           - ReadWriteOnce
+        storageClassName: "standard-expandable"
         resources:
           requests:
-            storage: 80Gi
-        storageClassName: standard
+            storage: 200Gi
         volumeMode: Filesystem

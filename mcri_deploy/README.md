@@ -13,9 +13,11 @@ and deployment Seqr application.
 ## Building Seqr Application
 
 ```bash
-SEQR_PROJECT_PATH="/Users/tommyli/Development/mcri/seqr"
+SEQR_PROJECT_PATH="$HOME/mcri/seqr"
 COMPOSE_FILE="$SEQR_PROJECT_PATH/mcri_deploy/docker-compose/docker-compose.yml"
 COMPOSE_BUILD_FILE="$SEQR_PROJECT_PATH/mcri_deploy/docker-compose/docker-compose.build.yml"
+
+# See seqr.sample.env for sample on how to create seqr.localbuild.env
 COMPOSE_ENV_FILE="$SEQR_PROJECT_PATH/mcri_deploy/docker-compose/seqr.localbuild.env"
 source "$SEQR_PROJECT_PATH/mcri_deploy/docker-compose/seqr.localbuild.env"
 
