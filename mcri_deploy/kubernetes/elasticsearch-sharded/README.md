@@ -1,4 +1,4 @@
-# MCRI Elastic Search Deployment
+# MCRI Elasticsearch Deployment
 
 This directory contains instructions and all deployment descriptors required
 for deploying Seqr's Elasticsearch instance at MCRI, hosted on Google Kubernetes Engine.
@@ -97,5 +97,5 @@ The StatefulSet "es-data" is invalid: spec: Forbidden: updates to statefulset sp
 
 Below links provide more information.
 
-* [https://www.elastic.co/guide/en/cloud-on-k8s/current/k8s-orchestration.html#k8s-orchestration-limitations](https://www.elastic.co/guide/en/cloud-on-k8s/current/k8s-orchestration.html#k8s-orchestration-limitations)
-* [https://github.com/kubernetes/enhancements/issues/661](https://github.com/kubernetes/enhancements/issues/661)
+* [Elasticsearch Nodes orchestration limitations](https://www.elastic.co/guide/en/cloud-on-k8s/current/k8s-orchestration.html#k8s-orchestration-limitations)
+* [Support Volume Expansion Through StatefulSets](https://github.com/kubernetes/enhancements/issues/661)
