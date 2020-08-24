@@ -5,6 +5,7 @@
 
 ui/node_modules
 ui/jest*
+ui/semantic
 
 *.pyc
 *.DS_Store
@@ -17,5 +18,9 @@ pedigree_images/*
 seqr_settings
 data
 
-docker-compose.*.env
-!docker-compose.sample.env
+seqr.*.env
+!seqr.sample.env
+.venv
+tmp
+django_key
+generated_files
