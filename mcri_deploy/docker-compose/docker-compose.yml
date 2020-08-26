@@ -70,7 +70,7 @@ services:
       - EMAIL_BACKEND=${EMAIL_BACKEND:-django.core.mail.backends.console.EmailBackend}
       - SMTP_EMAIL_HOST=${SMTP_EMAIL_HOST:-host.docker.internal}
       - SMTP_EMAIL_PORT=${SMTP_EMAIL_PORT:-25}
-      - DEFAULT_FROM_EMAIL=${SMTP_EMAIL_HOST:-host.docker.internal:-seqr@seqr.mcri.edu.au}
+      - DEFAULT_FROM_EMAIL=${DEFAULT_FROM_EMAIL:-seqr@seqr.mcri.edu.au}
       - STATIC_MEDIA_DIR=/seqr_static_files
       - POSTGRES_SERVICE_HOSTNAME=postgres
       - ELASTICSEARCH_SERVICE_HOSTNAME=${ELASTICSEARCH_SERVICE_HOSTNAME:-host.docker.internal}
