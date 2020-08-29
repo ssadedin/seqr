@@ -1,5 +1,6 @@
 import { createStore, applyMiddleware, compose } from 'redux'
 import thunkMiddleware from 'redux-thunk'
+import { composeWithDevTools } from 'redux-devtools-extension';
 
 import { loadState, saveState } from 'shared/utils/localStorage'
 
@@ -18,10 +19,9 @@ const persistStoreMiddleware = store => next => (action) => {
   return result
 }
 
-const enhancer = compose(
-  applyMiddleware(thunkMiddleware, persistStoreMiddleware),
-)
-
+const enhancer = env === 'development'
+  ? composeWithDevTools(applyMiddleware(thunkMiddleware, persistStoreMiddleware))
+  : compose(applyMiddleware(thunkMiddleware, persistStoreMiddleware))
 
 /**
  * Initialize the Redux store
