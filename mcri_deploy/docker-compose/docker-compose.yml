@@ -2,9 +2,12 @@ version: '2.4'
 
 services:
   postgres:
-    image: gcr.io/seqr-project/postgres:9.6
+    image: gcr.io/seqr-project/postgres:gcloud-prod
     ports:
-      - 5432:5432
+      - ${POSTGRES_SERVICE_PORT:-5433}:${POSTGRES_SERVICE_PORT:-5433}
+    environment:
+      - PGPORT=${POSTGRES_SERVICE_PORT:-5433}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-docker-compose-postgres-password}
     volumes:
       - ./data/postgres:/var/lib/postgresql/data
     healthcheck:
@@ -25,19 +28,13 @@ services:
       retries: 100
 
 
-  mongo:
-    image: mongo:3.6.2
-    ports:
-      - 27017:27017
-
-
   kibana:
     image: gcr.io/seqr-project/kibana:gcloud-prod
     ports:
       - 5601:5601
     environment:
-      - ELASTICSEARCH_SERVICE_HOSTNAME=${ELASTICSEARCH_SERVICE_HOSTNAME:-host.docker.internal}
-      - ELASTICSEARCH_SERVICE_PORT=${ELASTICSEARCH_SERVICE_PORT:-9200}
+      - ELASTICSEARCH_SERVICE_HOSTNAME=elasticsearch
+      - ELASTICSEARCH_SERVICE_PORT=9200
     healthcheck:
       test: bash -c "curl -s kibana:5601 | grep kibana"
       interval: 3s
@@ -45,24 +42,10 @@ services:
       retries: 100
 
 
-  phenotips:
-    image: gcr.io/seqr-project/phenotips:gcloud-prod
-    ports:
-      - 8080:8080
-    depends_on:
-      postgres:
-        condition: service_healthy
-    healthcheck:
-      test: bash -c "curl -s 'http://localhost:8080/bin/login/XWiki/XWikiLogin' | grep phenotips"
-      interval: 5s
-      timeout: 10s
-      retries: 100
-
-
   seqr:
     image: "${SEQR_CONTAINER_REGISTRY:-gcr.io/mcri-01}/${SEQR_IMAGE_NAME:-mcri-seqr}:${SEQR_IMAGE_TAG:-latest}"
     ports:
-      - 8000:8000
+      - 80:8000
     environment:
       - SEQR_GIT_BRANCH=${SEQR_GIT_BRANCH:?err}
       - PYTHONPATH=/seqr
@@ -73,19 +56,20 @@ services:
       - DEFAULT_FROM_EMAIL=${DEFAULT_FROM_EMAIL:-seqr@seqr.mcri.edu.au}
       - STATIC_MEDIA_DIR=/seqr_static_files
       - POSTGRES_SERVICE_HOSTNAME=postgres
+      - POSTGRES_SERVICE_PORT=${POSTGRES_SERVICE_PORT:-5433}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-docker-compose-postgres-password}
       - ELASTICSEARCH_SERVICE_HOSTNAME=${ELASTICSEARCH_SERVICE_HOSTNAME:-host.docker.internal}
       - ELASTICSEARCH_SERVICE_PORT=${ELASTICSEARCH_SERVICE_PORT:-9200}
-      - PHENOTIPS_SERVICE_HOSTNAME=phenotips
       - REDIS_SERVICE_HOSTNAME=redis
+      - KIBANA_SERVICE_HOSTNAME=kibana
       - PGHOST=postgres
+      - PGPORT=5433
       - PGUSER=postgres
-      - GUNICORN_WORKER_THREADS=3
+      - GUNICORN_WORKER_THREADS=4
     depends_on:
       postgres:
         condition: service_healthy
       redis:
-        condition: service_healthy
-      phenotips:
         condition: service_healthy
     healthcheck:
       test: bash -c "curl -s 'http://localhost:8000' | grep html"
