@@ -17,9 +17,9 @@ SEQR_PROJECT_PATH="$HOME/mcri/seqr"
 COMPOSE_FILE="$SEQR_PROJECT_PATH/mcri_deploy/docker-compose/docker-compose.yml"
 COMPOSE_BUILD_FILE="$SEQR_PROJECT_PATH/mcri_deploy/docker-compose/docker-compose.build.yml"
 
-# See seqr.sample.env for sample on how to create seqr.localbuild.env
-COMPOSE_ENV_FILE="$SEQR_PROJECT_PATH/mcri_deploy/docker-compose/seqr.localbuild.env"
-source "$SEQR_PROJECT_PATH/mcri_deploy/docker-compose/seqr.localbuild.env"
+# Use seqr.sample.env or create your own
+COMPOSE_ENV_FILE="$SEQR_PROJECT_PATH/mcri_deploy/docker-compose/seqr.sample.env"
+source "$SEQR_PROJECT_PATH/mcri_deploy/docker-compose/seqr.sample.env"
 
 # Build image
 docker-compose -f $COMPOSE_FILE -f $COMPOSE_BUILD_FILE --env-file=$COMPOSE_ENV_FILE build
@@ -30,4 +30,10 @@ docker tag $(docker images --filter=reference="${SEQR_CONTAINER_REGISTRY}/${SEQR
 # Optional: Push to container registry
 # This should not be necessary for local development and it'll take a while to upload.
 docker-compose -f $COMPOSE_FILE -f $COMPOSE_BUILD_FILE --env-file=$COMPOSE_ENV_FILE push
+
+# Optional: Run the newly built seqr
+docker-compose -f $COMPOSE_FILE -f $COMPOSE_BUILD_FILE --env-file=$COMPOSE_ENV_FILE up -d postgres
+
+# Optional: Stop seqr
+docker-compose -f $COMPOSE_FILE -f $COMPOSE_BUILD_FILE --env-file=$COMPOSE_ENV_FILE stop
 ```

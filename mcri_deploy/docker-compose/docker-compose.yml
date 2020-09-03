@@ -63,7 +63,7 @@ services:
       - REDIS_SERVICE_HOSTNAME=redis
       - KIBANA_SERVICE_HOSTNAME=kibana
       - PGHOST=postgres
-      - PGPORT=5433
+      - PGPORT=${POSTGRES_SERVICE_PORT:-5433}
       - PGUSER=postgres
       - GUNICORN_WORKER_THREADS=4
     depends_on:
