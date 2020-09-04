@@ -22,8 +22,8 @@ jobs:
       script:
       - npm test
 
-    - name: local_intall_test
-      services:
-      - docker
-      script:
-      - ./test_mcri_local_deployment.sh
+#    - name: local_intall_test
+#      services:
+#      - docker
+#      script:
+#      - ./test_mcri_local_deployment.sh
