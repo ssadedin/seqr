@@ -39,3 +39,13 @@ docker-compose -f $COMPOSE_FILE -f $COMPOSE_BUILD_FILE --env-file=$COMPOSE_ENV_F
 # Optional: Stop seqr
 docker-compose -f $COMPOSE_FILE -f $COMPOSE_BUILD_FILE --env-file=$COMPOSE_ENV_FILE stop
 ```
+
+## TODOs
+
+* Enable Travis build to authenticate with MCRI container registry to push and pull images, here are some useful links:
+  * [https://ciaranarcher.github.io/gcp/travis/2017/02/23/pushing-from-travis-to-google-container-registry.html](https://ciaranarcher.github.io/gcp/travis/2017/02/23/pushing-from-travis-to-google-container-registry.html)
+  * [https://cloud.google.com/container-registry/docs/overview](https://cloud.google.com/container-registry/docs/overview)
+  * [https://cloud.google.com/container-registry/docs/continuous-delivery](https://cloud.google.com/container-registry/docs/continuous-delivery)
+  * [https://docs.travis-ci.com/user/docker/](https://docs.travis-ci.com/user/docker/)
+  * [https://cloud.google.com/container-registry/docs/advanced-authentication](https://cloud.google.com/container-registry/docs/advanced-authentication)
+  * [https://cloud.google.com/container-registry/docs/access-control](https://cloud.google.com/container-registry/docs/access-control)
