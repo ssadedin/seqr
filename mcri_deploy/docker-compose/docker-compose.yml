@@ -33,8 +33,8 @@ services:
     ports:
       - 5601:5601
     environment:
-      - ELASTICSEARCH_SERVICE_HOSTNAME=elasticsearch
-      - ELASTICSEARCH_SERVICE_PORT=9200
+      - ELASTICSEARCH_SERVICE_HOSTNAME=${ELASTICSEARCH_SERVICE_HOSTNAME:-host.docker.internal}
+      - ELASTICSEARCH_SERVICE_PORT=${ELASTICSEARCH_SERVICE_PORT:-9200}
     healthcheck:
       test: bash -c "curl -s kibana:5601 | grep kibana"
       interval: 3s
