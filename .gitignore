@@ -25,3 +25,4 @@ docker-compose.*.env
 generated_files
 seqr.*.env
 !seqr.sample.env
+tmp
