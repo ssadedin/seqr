@@ -3,6 +3,7 @@ version: '2.4'
 services:
   postgres:
     image: gcr.io/seqr-project/postgres:gcloud-prod
+    container_name: mcri_postgres
     ports:
       - ${POSTGRES_SERVICE_PORT:-5433}:${POSTGRES_SERVICE_PORT:-5433}
     environment:
@@ -19,6 +20,7 @@ services:
 
   redis:
     image: gcr.io/seqr-project/redis:gcloud-prod
+    container_name: mcri_redis
     ports:
       - 6379:6379
     healthcheck:
@@ -30,6 +32,8 @@ services:
 
   kibana:
     image: gcr.io/seqr-project/kibana:gcloud-prod
+    container_name: mcri_kibana
+
     ports:
       - 5601:5601
     environment:
@@ -44,6 +48,7 @@ services:
 
   seqr:
     image: "${SEQR_CONTAINER_REGISTRY:-gcr.io/mcri-01}/${SEQR_IMAGE_NAME:-mcri-seqr}:${SEQR_IMAGE_TAG:-latest}"
+    container_name: mcri_seqr
     ports:
       - 80:8000
     environment:

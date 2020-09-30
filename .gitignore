@@ -12,7 +12,6 @@ ui/semantic
 .ipynb_checkpoints
 
 deploy/secrets/gcloud*/*
-deploy/secrets/gcloud*/*
 
 pedigree_images/*
 seqr_settings

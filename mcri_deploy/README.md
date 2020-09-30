@@ -13,13 +13,21 @@ and deployment Seqr application.
 ## Building Seqr Application
 
 ```bash
-SEQR_PROJECT_PATH="$HOME/mcri/seqr"
+# Clone if necessary, otherwise cd to git clone of seqr
+git clone https://github.com/ssadedin/seqr.git; cd seqr
+
+SEQR_PROJECT_PATH=$(pwd)
+
+cd $SEQR_PROJECT_PATH; git submodule update --init --recursive"
+
+git checkout -b mcri/master --track origin/mcri/master
+
 COMPOSE_FILE="$SEQR_PROJECT_PATH/mcri_deploy/docker-compose/docker-compose.yml"
 COMPOSE_BUILD_FILE="$SEQR_PROJECT_PATH/mcri_deploy/docker-compose/docker-compose.build.yml"
 
 # Use seqr.sample.env or create your own
 COMPOSE_ENV_FILE="$SEQR_PROJECT_PATH/mcri_deploy/docker-compose/seqr.sample.env"
-source "$SEQR_PROJECT_PATH/mcri_deploy/docker-compose/seqr.sample.env"
+source $COMPOSE_ENV_FILE
 
 # Build image
 docker-compose -f $COMPOSE_FILE -f $COMPOSE_BUILD_FILE --env-file=$COMPOSE_ENV_FILE build
@@ -38,6 +46,15 @@ docker-compose -f $COMPOSE_FILE -f $COMPOSE_BUILD_FILE --env-file=$COMPOSE_ENV_F
 
 # Optional: Stop seqr
 docker-compose -f $COMPOSE_FILE -f $COMPOSE_BUILD_FILE --env-file=$COMPOSE_ENV_FILE stop
+```
+
+## Support
+
+```bash
+# Copy .env files to GCP
+gsutil cp $SEQR_PROJECT_PATH/mcri_deploy/docker-compose/seqr.sample.env gs://mcri-seqr-envs/seqr.sample.env
+gsutil cp $SEQR_PROJECT_PATH/mcri_deploy/docker-compose/seqr.prodbuild.env gs://mcri-seqr-envs/seqr.prodbuild.env
+gsutil cp $SEQR_PROJECT_PATH/mcri_deploy/docker-compose/seqr.prodlocal.env gs://mcri-seqr-envs/seqr.prodlocal.env
 ```
 
 ## TODOs
