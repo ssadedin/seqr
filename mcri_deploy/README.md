@@ -48,15 +48,6 @@ docker-compose -f $COMPOSE_FILE -f $COMPOSE_BUILD_FILE --env-file=$COMPOSE_ENV_F
 docker-compose -f $COMPOSE_FILE -f $COMPOSE_BUILD_FILE --env-file=$COMPOSE_ENV_FILE stop
 ```
 
-## Support
-
-```bash
-# Copy .env files to GCP
-gsutil cp $SEQR_PROJECT_PATH/mcri_deploy/docker-compose/seqr.sample.env gs://mcri-seqr-envs/seqr.sample.env
-gsutil cp $SEQR_PROJECT_PATH/mcri_deploy/docker-compose/seqr.prodbuild.env gs://mcri-seqr-envs/seqr.prodbuild.env
-gsutil cp $SEQR_PROJECT_PATH/mcri_deploy/docker-compose/seqr.prodlocal.env gs://mcri-seqr-envs/seqr.prodlocal.env
-```
-
 ## TODOs
 
 * Enable Travis build to authenticate with MCRI container registry to push and pull images, here are some useful links:

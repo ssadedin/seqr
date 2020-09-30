@@ -50,7 +50,7 @@ services:
     image: "${SEQR_CONTAINER_REGISTRY:-gcr.io/mcri-01}/${SEQR_IMAGE_NAME:-mcri-seqr}:${SEQR_IMAGE_TAG:-latest}"
     container_name: mcri_seqr
     ports:
-      - 80:8000
+      - ${SEQR_SERVICE_PORT:-80}:8000
     environment:
       - SEQR_GIT_BRANCH=${SEQR_GIT_BRANCH:?err}
       - PYTHONPATH=/seqr
