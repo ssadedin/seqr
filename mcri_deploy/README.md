@@ -38,7 +38,6 @@ docker tag $(docker images --filter=reference="${SEQR_CONTAINER_REGISTRY}/${SEQR
 # Optional: Push to container registry
 # This should not be necessary for local development and it'll take a while to upload.
 docker-compose -f $COMPOSE_FILE -f $COMPOSE_BUILD_FILE --env-file=$COMPOSE_ENV_FILE push
-docker tag "${SEQR_CONTAINER_REGISTRY}/${SEQR_IMAGE_NAME}:${SEQR_IMAGE_TAG}" "${SEQR_CONTAINER_REGISTRY}/${SEQR_IMAGE_NAME}:latest"
 docker push "${SEQR_CONTAINER_REGISTRY}/${SEQR_IMAGE_NAME}:latest"
 
 # Optional: Run the newly built seqr
