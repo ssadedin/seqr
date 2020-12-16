@@ -27,10 +27,20 @@ COMPOSE_BUILD_FILE="$SEQR_PROJECT_PATH/mcri_deploy/docker-compose/docker-compose
 
 # Use seqr.sample.env or create your own
 COMPOSE_ENV_FILE="$SEQR_PROJECT_PATH/mcri_deploy/docker-compose/seqr.sample.env"
+COMPOSE_ENV_FILE="$SEQR_PROJECT_PATH/mcri_deploy/docker-compose/seqr.prodbuild.env"
 source $COMPOSE_ENV_FILE
 
+# Set tag to be latest Git commit hash
+export GIT_COMMIT_HASH=$(git rev-parse HEAD)
+export SEQR_IMAGE_TAG=$GIT_COMMIT_HASH
+
 # Build image
-docker-compose -f $COMPOSE_FILE -f $COMPOSE_BUILD_FILE --env-file=$COMPOSE_ENV_FILE build
+docker-compose --verbose \
+  -f $COMPOSE_FILE \
+  -f $COMPOSE_BUILD_FILE \
+  --env-file=$COMPOSE_ENV_FILE \
+  build \
+  --build-arg "gitcommithash=$GIT_COMMIT_HASH"
 
 # On top of $SEQR_IMAGE_TAG, also add latest tag
 docker tag $(docker images --filter=reference="${SEQR_CONTAINER_REGISTRY}/${SEQR_IMAGE_NAME}:${SEQR_IMAGE_TAG}" --quiet) "${SEQR_CONTAINER_REGISTRY}/${SEQR_IMAGE_NAME}:latest"
@@ -40,10 +50,9 @@ docker tag $(docker images --filter=reference="${SEQR_CONTAINER_REGISTRY}/${SEQR
 docker-compose -f $COMPOSE_FILE -f $COMPOSE_BUILD_FILE --env-file=$COMPOSE_ENV_FILE push
 docker push "${SEQR_CONTAINER_REGISTRY}/${SEQR_IMAGE_NAME}:latest"
 
-# Optional: Run the newly built seqr
+# Optional: Running and stopping the newly built seqr
 docker-compose -f $COMPOSE_FILE -f $COMPOSE_BUILD_FILE --env-file=$COMPOSE_ENV_FILE up -d postgres
 
-# Optional: Stop seqr
 docker-compose -f $COMPOSE_FILE -f $COMPOSE_BUILD_FILE --env-file=$COMPOSE_ENV_FILE stop
 ```
 

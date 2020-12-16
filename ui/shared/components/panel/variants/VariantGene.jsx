@@ -3,10 +3,10 @@ import PropTypes from 'prop-types'
 import styled from 'styled-components'
 import { connect } from 'react-redux'
 import { NavLink } from 'react-router-dom'
-import { Label, Popup, List, Header } from 'semantic-ui-react'
+import { Label, Popup, List, ListItem, Header } from 'semantic-ui-react'
 
 import { getGenesById, getLocusListsByGuid, getCurrentProject, getUser } from 'redux/selectors'
-import { MISSENSE_THRESHHOLD, LOF_THRESHHOLD } from '../../../utils/constants'
+import { MISSENSE_THRESHHOLD, LOF_THRESHHOLD, GENETALE_INHERITANCE_CODES } from '../../../utils/constants'
 import { HorizontalSpacer, VerticalSpacer } from '../../Spacers'
 import { InlineHeader, ButtonLink } from '../../StyledComponents'
 import SearchResultsLink from '../../buttons/SearchResultsLink'
@@ -41,7 +41,7 @@ const ListItemLink = styled(List.Item).attrs({ icon: 'linkify' })`
     color: initial;
     cursor: auto;
  }
- 
+
  i.icon {
   color: #4183C4 !important;
  }
@@ -181,7 +181,14 @@ const GENE_DETAIL_SECTIONS = [
   },
 ]
 
-export const GeneDetails = React.memo(({ gene, compact, showLocusLists, containerStyle, ...labelProps }) =>
+const GENETALE_SECTIONS = [
+  {
+    color: 'orange',
+    description: 'Genetale All Inheritances',
+  },
+]
+
+export const GeneDetails = React.memo(({ gene, genetale, compact, showLocusLists, containerStyle, ...labelProps }) =>
   <div style={containerStyle}>
     {GENE_DETAIL_SECTIONS.map(({ showDetails, detailsDisplay, ...sectionConfig }) =>
       <GeneDetailSection
@@ -192,12 +199,37 @@ export const GeneDetails = React.memo(({ gene, compact, showLocusLists, containe
         {...labelProps}
       />,
     )}
+    {GENETALE_SECTIONS.map(({ showDetails, detailsDisplay, ...sectionConfig }) => {
+      const allInheritances = (genetale?.allInheritances || []).filter(v => GENETALE_INHERITANCE_CODES.includes(v.toUpperCase()))
+      const label = `GENETALE ${allInheritances.join(', ')}`
+      const details = allInheritances.length > 0 ? (
+        <List>
+          {allInheritances.map(h =>
+            <ListItem
+              key={h}
+              content={h}
+            />,
+          )}
+        </List>
+      ) : null
+
+      return (<GeneDetailSection
+        key={sectionConfig.label}
+        compact={compact}
+        details={details}
+        label={label}
+        {...sectionConfig}
+        {...labelProps}
+      />)
+    },
+    )}
     {showLocusLists && <LocusListLabels locusListGuids={gene.locusListGuids} compact={compact} containerStyle={containerStyle} {...labelProps} />}
   </div>,
 )
 
 GeneDetails.propTypes = {
   gene: PropTypes.object,
+  genetale: PropTypes.object,
   compact: PropTypes.bool,
   showLocusLists: PropTypes.bool,
   containerStyle: PropTypes.object,
@@ -217,6 +249,7 @@ const BaseVariantGene = React.memo(({ geneId, gene, project, user, variant, comp
   const geneDetails = (
     <GeneDetails
       gene={gene}
+      genetale={variant.genetale}
       compact={compactDetails}
       containerStyle={(showInlineDetails || areCompoundHets) && INLINE_STYLE}
       margin={showInlineDetails ? '1em .5em 0px 0px' : null}
@@ -343,7 +376,7 @@ class VariantGenes extends React.PureComponent {
                 {...sectionConfig}
               />
             )
-        })}
+          })}
         </div>
       </div>
     )

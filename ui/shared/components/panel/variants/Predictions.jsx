@@ -43,11 +43,39 @@ const predictionFieldValue = (predictions, { field, dangerThreshold, warningThre
 }
 
 const Prediction = ({ field, value, color, infoValue, infoTitle }) => {
-  const indicator = infoValue ? <Popup
-    header={infoTitle}
-    content={infoValue}
-    trigger={<Icon name="question circle" size="small" color={color} />}
-  /> : <Icon name="circle" size="small" color={color} />
+  let indicator = (<Icon name="circle" size="small" color={color} />)
+
+  if (infoValue) {
+    const triggerIcon = (<Icon name="question circle" size="small" color={color} />)
+    if (Array.isArray(infoValue)) {
+      // console.log(`this.props.gene=${this.props.gene}`)
+      indicator = (
+        <Popup
+          header={infoTitle}
+          trigger={triggerIcon}
+        >
+          <Popup.Header>{infoTitle}</Popup.Header>
+          <Popup.Content>
+            {
+              infoValue.map((inf) => {
+                return (<div>{inf}</div>)
+              })
+            }
+          </Popup.Content>
+        </Popup>
+      )
+    }
+    else {
+      indicator = (
+        <Popup
+          header={infoTitle}
+          content={infoValue}
+          trigger={triggerIcon}
+        />
+      )
+    }
+  }
+
   return (
     <div>
       {indicator} {snakecaseToTitlecase(field)}
@@ -66,6 +94,7 @@ Prediction.propTypes = {
 }
 
 const PREDICTOR_FIELDS = [
+  { field: 'genetale_var_class_num', warningThreshold: 5, dangerThreshold: 6, infoField: 'genetale_gene_class_info', infoTitle: 'Gene Class Info' }, // ranges from 3 to 7
   { field: 'cadd', warningThreshold: 10, dangerThreshold: 20 },
   { field: 'revel', warningThreshold: 0.5, dangerThreshold: 0.75 },
   { field: 'primate_ai', warningThreshold: 0.5, dangerThreshold: 0.7 },
@@ -127,17 +156,17 @@ class Predictions extends React.PureComponent {
         }
         {
           predictorFields.length > NUM_TO_SHOW_ABOVE_THE_FOLD &&
-            <Transition.Group animation="fade down" duration="500">
-              {
-                this.state.showMore && predictorFields.slice(NUM_TO_SHOW_ABOVE_THE_FOLD).map(predictorField =>
-                  <Prediction key={predictorField.field} {...predictorField} />,
-                )
-              }
-              <ButtonLink onClick={this.toggleShowMore}>
-                <HorizontalSpacer width={20} />
-                {this.state.showMore ? 'hide' : 'show more...'}
-              </ButtonLink>
-            </Transition.Group>
+          <Transition.Group animation="fade down" duration="500">
+            {
+              this.state.showMore && predictorFields.slice(NUM_TO_SHOW_ABOVE_THE_FOLD).map(predictorField =>
+                <Prediction key={predictorField.field} {...predictorField} />,
+              )
+            }
+            <ButtonLink onClick={this.toggleShowMore}>
+              <HorizontalSpacer width={20} />
+              {this.state.showMore ? 'hide' : 'show more...'}
+            </ButtonLink>
+          </Transition.Group>
         }
       </div>
     )
@@ -149,4 +178,3 @@ const mapStateToProps = (state, ownProps) => ({
 })
 
 export default connect(mapStateToProps)(Predictions)
-

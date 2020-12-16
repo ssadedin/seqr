@@ -727,6 +727,7 @@ const SORT_BY_GNOMAD = 'GNOMAD'
 const SORT_BY_EXAC = 'EXAC'
 const SORT_BY_1KG = '1KG'
 const SORT_BY_CONSTRAINT = 'CONSTRAINT'
+const SORT_BY_GENETALE_VAR_CLASS_NUM = 'GENETALE_VAR_CLASS_NUM'
 const SORT_BY_CADD = 'CADD'
 const SORT_BY_REVEL = 'REVEL'
 const SORT_BY_SPLICE_AI = 'SPLICE_AI'
@@ -784,6 +785,7 @@ const VARIANT_SORT_OPTONS = [
   { value: SORT_BY_GNOMAD, text: 'gnomAD Genomes Frequency', comparator: populationComparator('gnomad_genomes') },
   { value: SORT_BY_EXAC, text: 'ExAC Frequency', comparator: populationComparator('exac') },
   { value: SORT_BY_1KG, text: '1kg  Frequency', comparator: populationComparator('g1k') },
+  { value: SORT_BY_GENETALE_VAR_CLASS_NUM, text: 'Genetale Variant Class', comparator: predictionComparator('genetale_var_class_num') },
   { value: SORT_BY_CADD, text: 'Cadd', comparator: predictionComparator('cadd') },
   { value: SORT_BY_REVEL, text: 'Revel', comparator: predictionComparator('revel') },
   { value: SORT_BY_EIGEN, text: 'Eigen', comparator: predictionComparator('eigen') },
@@ -883,6 +885,8 @@ export const PREDICTION_INDICATOR_MAP = {
   B: { color: 'green', value: 'benign' },
 }
 
+export const GENETALE_INHERITANCE_CODES = ['AR', 'AD', 'XLR', 'XLD']
+
 export const POLYPHEN_MAP = {
   D: { value: 'probably damaging' },
   P: { color: 'yellow', value: 'possibly damaging' },
@@ -927,6 +931,7 @@ export const VARIANT_EXPORT_DATA = [
   { header: 'gnomad_genomes_freq', getVal: getPopAf('gnomad_genomes') },
   { header: 'gnomad_exomes_freq', getVal: getPopAf('gnomad_exomes') },
   { header: 'topmed_freq', getVal: getPopAf('topmed') },
+  { header: 'genetale_var_class_num', getVal: variant => (variant.predictions || {}).genetale_var_class_num },
   { header: 'cadd', getVal: variant => (variant.predictions || {}).cadd },
   { header: 'revel', getVal: variant => (variant.predictions || {}).revel },
   { header: 'eigen', getVal: variant => (variant.predictions || {}).eigen },
@@ -1007,4 +1012,3 @@ export const USER_NAME_FIELDS = [
     inline: true,
   },
 ]
-
