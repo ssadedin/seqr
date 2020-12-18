@@ -27,7 +27,6 @@ COMPOSE_BUILD_FILE="$SEQR_PROJECT_PATH/mcri_deploy/docker-compose/docker-compose
 
 # Use seqr.sample.env or create your own
 COMPOSE_ENV_FILE="$SEQR_PROJECT_PATH/mcri_deploy/docker-compose/seqr.sample.env"
-COMPOSE_ENV_FILE="$SEQR_PROJECT_PATH/mcri_deploy/docker-compose/seqr.prodbuild.env"
 source $COMPOSE_ENV_FILE
 
 # Set tag to be latest Git commit hash
