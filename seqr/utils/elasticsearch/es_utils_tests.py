@@ -718,6 +718,22 @@ INDEX_METADATA = {
 }
 INDEX_METADATA[NO_LIFT_38_INDEX_NAME] = INDEX_METADATA[SECOND_INDEX_NAME]
 
+MCRI_INDEX_METADATA = {
+    INDEX_NAME: {'variant': {
+        '_meta': {'genomeVersion': '37'},
+        'properties': MAPPING_PROPERTIES,
+    }},
+    SECOND_INDEX_NAME: {'variant': {
+        '_meta': {'genomeVersion': '38', 'datasetType': 'VARIANTS'},
+        'properties': MAPPING_PROPERTIES,
+    }},
+    SV_INDEX_NAME: {'structural_variant': {
+        '_meta': {'genomeVersion': '37', 'datasetType': 'SV'},
+        'properties': {field: {'type': 'keyword'} for field in SV_MAPPING_FIELDS},
+    }},
+}
+MCRI_INDEX_METADATA[NO_LIFT_38_INDEX_NAME] = MCRI_INDEX_METADATA[SECOND_INDEX_NAME]
+
 ALL_INHERITANCE_QUERY = {
     'bool': {
         'should': [
@@ -944,6 +960,54 @@ def create_mock_response(search, index=INDEX_NAME):
 
     return response_dict
 
+def create_mock_mcri_response(search, index=INDEX_NAME):
+    index = ALIAS_MAP.get(index, index)
+    indices = index.split(',')
+    include_matched_queries = False
+    variant_id_filters = None
+    if 'query' in search:
+        for search_filter in search['query']['bool']['filter']:
+            if not variant_id_filters:
+                variant_id_filters = search_filter.get('terms', {}).get('variantId')
+            possible_inheritance_filters = search_filter.get('bool', {}).get('should', [])
+            if any('_name' in possible_filter.get('bool', {}) for possible_filter in possible_inheritance_filters):
+                include_matched_queries = True
+                break
+
+    response_dict = {
+        'took': 1,
+        'hits': {'total': 5, 'hits': []}
+    }
+    for index_name in sorted(indices):
+        index_hits = mock_hits(
+            INDEX_ES_VARIANTS[index_name], include_matched_queries=include_matched_queries, sort=search.get('sort'),
+            index=index_name)
+        if variant_id_filters:
+            index_hits = [hit for hit in index_hits if hit['_id'] in variant_id_filters]
+        response_dict['hits']['hits'] += index_hits
+
+    if search.get('aggs'):
+        index_vars = COMPOUND_HET_INDEX_VARIANTS.get(index, {})
+        buckets = [{'key': gene_id, 'doc_count': 3} for gene_id in ['ENSG00000135953', 'ENSG00000228198']]
+        if search['aggs']['genes']['aggs'].get('vars_by_gene'):
+            for bucket in buckets:
+                bucket['vars_by_gene'] = {
+                    'hits': {
+                        'hits': mock_hits(index_vars.get(bucket['key'], ES_VARIANTS), increment_sort=True, index=index)
+                    }}
+        else:
+            for bucket in buckets:
+                for sample_field in ['samples', 'samples_num_alt_1', 'samples_num_alt_2']:
+                    gene_samples = defaultdict(int)
+                    for var in index_vars.get(bucket['key'], ES_VARIANTS):
+                        for sample in var['_source'].get(sample_field, []):
+                            gene_samples[sample] += 1
+                    bucket[sample_field] = {'buckets': [{'key': k, 'doc_count': v} for k, v in gene_samples.items()]}
+
+        response_dict['aggregations'] = {'genes': {'buckets': buckets}}
+
+    return response_dict
+
 def get_indices_from_url(url):
     return url.split('/')[1]
 
@@ -952,9 +1016,19 @@ def get_metadata_callback(request):
     response = {index: {'mappings': INDEX_METADATA[index]} for index in indices}
     return 200, {}, json.dumps(response)
 
+def get_mcri_metadata_callback(request):
+    indices = get_indices_from_url(request.url).split(',')
+    response = {index: {'mappings': MCRI_INDEX_METADATA[index]} for index in indices}
+    return 200, {}, json.dumps(response)
+
 def get_search_callback(request):
     body = json.loads(request.body)
     response = create_mock_response(body, get_indices_from_url(request.url))
+    return 200, {}, json.dumps(response)
+
+def get_mcri_search_callback(request):
+    body = json.loads(request.body)
+    response = create_mock_mcri_response(body, get_indices_from_url(request.url))
     return 200, {}, json.dumps(response)
 
 def parse_msearch_body(body):
@@ -977,6 +1051,15 @@ def setup_search_response():
 def setup_responses():
     urllib3_responses.add_callback(
         urllib3_responses.GET, re.compile('^/[,\w]+/_mapping$'), callback=get_metadata_callback,
+        content_type='application/json', match_querystring=True)
+    urllib3_responses.add_callback(
+        urllib3_responses.POST, re.compile('^/[,\w]+/_msearch$'), callback=get_msearch_callback,
+        content_type='application/json', match_querystring=True)
+    setup_search_response()
+
+def setup_mcri_responses():
+    urllib3_responses.add_callback(
+        urllib3_responses.GET, re.compile('^/[,\w]+/_mapping$'), callback=get_mcri_metadata_callback,
         content_type='application/json', match_querystring=True)
     urllib3_responses.add_callback(
         urllib3_responses.POST, re.compile('^/[,\w]+/_msearch$'), callback=get_msearch_callback,
@@ -1082,6 +1165,33 @@ class EsUtilsTest(TestCase):
     @urllib3_responses.activate
     def test_get_single_es_variant(self):
         setup_responses()
+        variant = get_single_es_variant(self.families, '2-103343353-GAGA-G')
+        self.assertDictEqual(variant, PARSED_NO_SORT_VARIANTS[1])
+        self.assertExecutedSearch(
+            filters=[{'terms': {'variantId': ['2-103343353-GAGA-G']}}],
+            size=2, index=','.join([INDEX_NAME, SV_INDEX_NAME]),
+        )
+
+        variant = get_single_es_variant(self.families, '1-248367227-TC-T', return_all_queried_families=True)
+        all_family_variant = deepcopy(PARSED_NO_SORT_VARIANTS[0])
+        all_family_variant['familyGuids'] = ['F000002_2', 'F000003_3', 'F000005_5']
+        all_family_variant['genotypes']['I000004_hg00731'] = {
+            'ab': 0, 'ad': None, 'gq': 99, 'sampleId': 'HG00731', 'numAlt': 0, 'dp': 88, 'pl': None,
+            'cn': 2, 'end': None, 'start': None, 'numExon': None, 'defragged': None, 'qs': None,
+        }
+        self.assertDictEqual(variant, all_family_variant)
+        self.assertExecutedSearch(
+            filters=[{'terms': {'variantId': ['1-248367227-TC-T']}}],
+            size=2, index=','.join([INDEX_NAME, SV_INDEX_NAME]),
+        )
+
+        with self.assertRaises(InvalidSearchException) as cm:
+            get_single_es_variant(self.families, '10-10334333-A-G')
+        self.assertEqual(str(cm.exception), 'Variant 10-10334333-A-G not found')
+
+    @urllib3_responses.activate
+    def test_get_single_es_variant_mcri(self):
+        setup_mcri_responses()
         variant = get_single_es_variant(self.families, '2-103343353-GAGA-G')
         self.assertDictEqual(variant, PARSED_NO_SORT_VARIANTS[1])
         self.assertExecutedSearch(
