@@ -26,7 +26,7 @@ COMPOSE_FILE="$SEQR_PROJECT_PATH/mcri_deploy/docker-compose/docker-compose.yml"
 COMPOSE_BUILD_FILE="$SEQR_PROJECT_PATH/mcri_deploy/docker-compose/docker-compose.build.yml"
 
 # Use seqr.sample.env or create your own
-COMPOSE_ENV_FILE="$SEQR_PROJECT_PATH/mcri_deploy/docker-compose/seqr.sample.env"
+COMPOSE_ENV_FILE="$SEQR_PROJECT_PATH/mcri_deploy/docker-compose/seqr.test.env"
 source $COMPOSE_ENV_FILE
 
 # Set tag to be latest Git commit hash
@@ -39,7 +39,9 @@ docker-compose --verbose \
   -f $COMPOSE_BUILD_FILE \
   --env-file=$COMPOSE_ENV_FILE \
   build \
-  --build-arg "gitcommithash=$GIT_COMMIT_HASH"
+  --build-arg "gitcommithash=$GIT_COMMIT_HASH" \
+  --build-arg "SEQR_REPO=https://github.com/ssadedin/seqr" \
+  --build-arg "SEQR_GIT_BRANCH=mcri/issue-26-merge-upstream"
 
 # On top of $SEQR_IMAGE_TAG, also add latest tag
 docker tag $(docker images --filter=reference="${SEQR_CONTAINER_REGISTRY}/${SEQR_IMAGE_NAME}:${SEQR_IMAGE_TAG}" --quiet) "${SEQR_CONTAINER_REGISTRY}/${SEQR_IMAGE_NAME}:latest"
