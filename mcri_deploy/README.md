@@ -17,10 +17,10 @@ and deployment Seqr application.
 git clone https://github.com/ssadedin/seqr.git; cd seqr
 
 SEQR_PROJECT_PATH=$(pwd)
-
+SEQR_GIT_BRANCH="mcri/master"
 cd $SEQR_PROJECT_PATH; git submodule update --init --recursive"
 
-git checkout -b mcri/master --track origin/mcri/master
+git checkout -b "$SEQR_GIT_BRANCH" --track "origin/$SEQR_GIT_BRANCH"
 
 COMPOSE_FILE="$SEQR_PROJECT_PATH/mcri_deploy/docker-compose/docker-compose.yml"
 COMPOSE_BUILD_FILE="$SEQR_PROJECT_PATH/mcri_deploy/docker-compose/docker-compose.build.yml"
@@ -41,7 +41,7 @@ docker-compose --verbose \
   build \
   --build-arg "gitcommithash=$GIT_COMMIT_HASH" \
   --build-arg "SEQR_REPO=https://github.com/ssadedin/seqr" \
-  --build-arg "SEQR_GIT_BRANCH=mcri/issue-26-merge-upstream"
+  --build-arg "SEQR_GIT_BRANCH=$SEQR_GIT_BRANCH"
 
 # On top of $SEQR_IMAGE_TAG, also add latest tag
 docker tag $(docker images --filter=reference="${SEQR_CONTAINER_REGISTRY}/${SEQR_IMAGE_NAME}:${SEQR_IMAGE_TAG}" --quiet) "${SEQR_CONTAINER_REGISTRY}/${SEQR_IMAGE_NAME}:latest"
