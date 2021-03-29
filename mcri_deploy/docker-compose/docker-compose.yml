@@ -31,7 +31,7 @@ services:
 
 
   kibana:
-    image: gcr.io/seqr-project/kibana:gcloud-prod
+    image: gcr.io/seqr-project/kibana:20200127_164643
     container_name: mcri_kibana
 
     ports:
