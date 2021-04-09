@@ -13,43 +13,48 @@ and deployment Seqr application.
 ## Building Seqr Application
 
 ```bash
-# Clone if necessary, otherwise cd to git clone of seqr
-git clone https://github.com/ssadedin/seqr.git; cd seqr
-
+# From here, assume $SEQR_PROJECT_PATH is the path to seqr checkout
 SEQR_PROJECT_PATH=$(pwd)
 SEQR_GIT_BRANCH="mcri/master"
-cd $SEQR_PROJECT_PATH; git submodule update --init --recursive"
 
+# Clone if necessary, otherwise cd to git clone of seqr
+git clone https://github.com/ssadedin/seqr.git; cd seqr
+git submodule update --init --recursive"
 git checkout -b "$SEQR_GIT_BRANCH" --track "origin/$SEQR_GIT_BRANCH"
 
 COMPOSE_FILE="$SEQR_PROJECT_PATH/mcri_deploy/docker-compose/docker-compose.yml"
 COMPOSE_BUILD_FILE="$SEQR_PROJECT_PATH/mcri_deploy/docker-compose/docker-compose.build.yml"
 
-# Use seqr.sample.env or create your own
-COMPOSE_ENV_FILE="$SEQR_PROJECT_PATH/mcri_deploy/docker-compose/seqr.test.env"
+# Use seqr.sample.env or create your own (if changing build ENV vars) 
+COMPOSE_ENV_FILE="$SEQR_PROJECT_PATH/mcri_deploy/docker-compose/seqr.sample.env"
 source $COMPOSE_ENV_FILE
 
-# Set tag to be latest Git commit hash
-export GIT_COMMIT_HASH=$(git rev-parse HEAD)
-export SEQR_IMAGE_TAG=$GIT_COMMIT_HASH
-
-# Build image
+# Build image and adds latest Docker tag by default
 docker-compose --verbose \
   -f $COMPOSE_FILE \
   -f $COMPOSE_BUILD_FILE \
   --env-file=$COMPOSE_ENV_FILE \
   build \
-  --build-arg "gitcommithash=$GIT_COMMIT_HASH" \
-  --build-arg "SEQR_REPO=https://github.com/ssadedin/seqr" \
+  --build-arg "SEQR_REPO=$SEQR_REPO" \
   --build-arg "SEQR_GIT_BRANCH=$SEQR_GIT_BRANCH"
 
-# On top of $SEQR_IMAGE_TAG, also add latest tag
-docker tag $(docker images --filter=reference="${SEQR_CONTAINER_REGISTRY}/${SEQR_IMAGE_NAME}:${SEQR_IMAGE_TAG}" --quiet) "${SEQR_CONTAINER_REGISTRY}/${SEQR_IMAGE_NAME}:latest"
+# After build successful, tag Git repo and Docker repo
+# MCRI Seqr follows CalVer, change number after _ (underscore) if deploying multiple times
+# on the same day.
+export SEQR_VERSION="v$(date +"%Y.%m.%d")_02"
+git tag -a "${SEQR_VERSION} -m "MCRI seqr version ${SEQR_VERSION}"
+export SEQR_IMAGE_TAG="${SEQR_VERSION}"
+export SEQR_LONG_GIT_TAG=$(git describe --long)
+
+docker tag $(docker images --filter=reference="${SEQR_CONTAINER_REGISTRY}/${SEQR_IMAGE_NAME}:latest" --quiet) "${SEQR_CONTAINER_REGISTRY}/${SEQR_IMAGE_NAME}:${SEQR_IMAGE_TAG}"
+docker tag $(docker images --filter=reference="${SEQR_CONTAINER_REGISTRY}/${SEQR_IMAGE_NAME}:latest" --quiet) "${SEQR_CONTAINER_REGISTRY}/${SEQR_IMAGE_NAME}:${SEQR_LONG_GIT_TAG}"
 
 # Optional: Push to container registry
 # This should not be necessary for local development and it'll take a while to upload.
 docker-compose -f $COMPOSE_FILE -f $COMPOSE_BUILD_FILE --env-file=$COMPOSE_ENV_FILE push
 docker push "${SEQR_CONTAINER_REGISTRY}/${SEQR_IMAGE_NAME}:latest"
+docker push "${SEQR_CONTAINER_REGISTRY}/${SEQR_IMAGE_NAME}:${SEQR_IMAGE_TAG}"
+docker push "${SEQR_CONTAINER_REGISTRY}/${SEQR_IMAGE_NAME}:${SEQR_LONG_GIT_TAG}"
 
 # Optional: Running and stopping the newly built seqr
 docker-compose -f $COMPOSE_FILE -f $COMPOSE_BUILD_FILE --env-file=$COMPOSE_ENV_FILE up -d postgres
