@@ -21,8 +21,6 @@ services:
   redis:
     image: gcr.io/seqr-project/redis:gcloud-prod
     container_name: mcri_redis
-    ports:
-      - 6379:6379
     healthcheck:
       test: redis-cli ping
       interval: 3s
@@ -31,16 +29,14 @@ services:
 
 
   kibana:
-    image: gcr.io/seqr-project/kibana:20200127_164643
+    image: gcr.io/seqr-project/kibana:${KIBANA_IMAGE_TAG:-gcloud-prod}
     container_name: mcri_kibana
-
-    ports:
-      - 5601:5601
     environment:
       - ELASTICSEARCH_SERVICE_HOSTNAME=${ELASTICSEARCH_SERVICE_HOSTNAME:-host.docker.internal}
       - ELASTICSEARCH_SERVICE_PORT=${ELASTICSEARCH_SERVICE_PORT:-9200}
+      - ELASTICSEARCH_HOSTS="http://${ELASTICSEARCH_SERVICE_HOSTNAME:-host.docker.internal}:${ELASTICSEARCH_SERVICE_PORT:-9200}"
     healthcheck:
-      test: bash -c "curl -s kibana:5601 | grep kibana"
+      test: bash -c "curl -s -L kibana:5601 | grep kibana"
       interval: 3s
       timeout: 5s
       retries: 100
@@ -80,3 +76,10 @@ services:
         condition: service_healthy
     healthcheck:
       test: bash -c "curl -s 'http://localhost:8000' | grep html"
+
+
+  pipeline-runner:
+    image: gcr.io/seqr-project/pipeline-runner:gcloud-prod
+    container_name: mcri_pipeline-runner
+    volumes:
+      - ~/.config:/root/.config

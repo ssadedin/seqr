@@ -2,13 +2,12 @@ apiVersion: elasticsearch.k8s.elastic.co/v1
 kind: Elasticsearch
 metadata:
   name: elasticsearch
-  namespace: {{ NAMESPACE }}
   labels:
     name: elasticsearch
-    deployment: {{ DEPLOY_TO }}
+    env: test
 spec:
-  version: {{ ELASTICSEARCH_VERSION }}
-  image: {{ DOCKER_IMAGE_PREFIX }}/elasticsearch{{ DOCKER_IMAGE_TAG }}-{{ ELASTICSEARCH_VERSION }}
+  version: 7.8.1
+  image: "gcr.io/seqr-project/elasticsearch:gcloud-prod-7.8.1"
   auth:
     roles:
       - secretName: elasticsearch-secrets
@@ -18,13 +17,9 @@ spec:
     tls:
       selfSignedCertificate:
         disabled: true
-  {% if ES_CONFIGURE_SNAPSHOTS %}
-  secureSettings:
-    - secretName: es-snapshot-gcs-secrets
-  {% endif %}
   nodeSets:
   - name: master-node
-    count: {{ ES_MASTER_NUM_PODS }}
+    count: 3
     config:
       node.master: true
       node.data: false
@@ -34,11 +29,13 @@ spec:
       cluster.routing.allocation.disk.watermark.low: "91%"
       cluster.routing.allocation.disk.watermark.high: "95%"
       cluster.routing.allocation.disk.watermark.flood_stage: "97%"
+      xpack.security.enabled: false
     podTemplate:
       metadata:
         labels:
           name: elasticsearch
-          deployment: {{ DEPLOY_TO }}
+          role: master
+          env: test
       spec:
         affinity:
           nodeAffinity:
@@ -46,9 +43,9 @@ spec:
               nodeSelectorTerms:
               - matchExpressions:
                 - key: nodeType
-                  operator: NotIn
+                  operator: In
                   values:
-                  - data
+                  - default
         initContainers:
           - name: sysctl
             securityContext:
@@ -56,19 +53,23 @@ spec:
             command: ['sh', '-c', 'sysctl -w vm.max_map_count=262144']
         containers:
         - name: elasticsearch
-          imagePullPolicy: {{ IMAGE_PULL_POLICY }}
+          imagePullPolicy: Always
+          volumeMounts:
+            - mountPath: /usr/share/elasticsearch/data
+              name: elasticsearch-data
+              subPath: data
     volumeClaimTemplates:
         - metadata:
             name: elasticsearch-data
           spec:
             accessModes:
               - ReadWriteOnce
-            storageClassName: standard
+            storageClassName: pd-standard-expandable-storage-class
             resources:
               requests:
-                storage: {{ ES_POD_VOLUME_SIZE }}
+                storage: 10Gi
   - name: client-node
-    count: {{ ES_CLIENT_NUM_PODS }}
+    count: 2
     config:
       node.master: false
       node.data: false
@@ -78,11 +79,13 @@ spec:
       cluster.routing.allocation.disk.watermark.low: "91%"
       cluster.routing.allocation.disk.watermark.high: "95%"
       cluster.routing.allocation.disk.watermark.flood_stage: "97%"
+      xpack.security.enabled: false
     podTemplate:
       metadata:
         labels:
           name: elasticsearch
-          deployment: {{ DEPLOY_TO }}
+          role: client
+          env: test
       spec:
         affinity:
           nodeAffinity:
@@ -90,9 +93,9 @@ spec:
               nodeSelectorTerms:
               - matchExpressions:
                 - key: nodeType
-                  operator: NotIn
+                  operator: In
                   values:
-                  - data
+                  - default
         initContainers:
           - name: sysctl
             securityContext:
@@ -100,7 +103,7 @@ spec:
             command: ['sh', '-c', 'sysctl -w vm.max_map_count=262144']
         containers:
         - name: elasticsearch
-          imagePullPolicy: {{ IMAGE_PULL_POLICY }}
+          imagePullPolicy: Always
     volumeClaimTemplates:
         - metadata:
             name: elasticsearch-data
@@ -110,9 +113,9 @@ spec:
             storageClassName: standard
             resources:
               requests:
-                storage: {{ ES_POD_VOLUME_SIZE }}
+                storage: 10Gi
   - name: data
-    count:  {{ ES_DATA_NUM_PODS }}
+    count: 3
     config:
       node.master: false
       node.data: true
@@ -122,13 +125,14 @@ spec:
       cluster.routing.allocation.disk.watermark.low: "91%"
       cluster.routing.allocation.disk.watermark.high: "95%"
       cluster.routing.allocation.disk.watermark.flood_stage: "97%"
+      xpack.security.enabled: false
     podTemplate:
       metadata:
         labels:
           name: elasticsearch
-          deployment: {{ DEPLOY_TO }}
+          role: data
+          env: test
       spec:
-      {% if ES_DATA_NUM_PODS > 1 %}
         affinity:
           nodeAffinity:
             requiredDuringSchedulingIgnoredDuringExecution:
@@ -137,8 +141,7 @@ spec:
                 - key: nodeType
                   operator: In
                   values:
-                  - data
-      {% endif %}
+                  - default
         initContainers:
         - name: sysctl
           securityContext:
@@ -146,28 +149,31 @@ spec:
           command: ['sh', '-c', 'sysctl -w vm.max_map_count=262144']
         containers:
         - name: elasticsearch
-          imagePullPolicy: {{ IMAGE_PULL_POLICY }}
+          imagePullPolicy: Always
           env:
           - name: ES_JAVA_OPTS
-            value: "-Xms{{ ELASTICSEARCH_JVM_MEMORY }} -Xmx{{ ELASTICSEARCH_JVM_MEMORY }}"
+            value: "-Xms4096m -Xmx4096m"
           resources:
             requests:
-              memory: {{ ELASTICSEARCH_CONTAINER_MEMORY }}
+              memory: 5Gi
             limits:
-              memory: {{ ELASTICSEARCH_CONTAINER_MEMORY }}
+              memory: 5Gi
+          volumeMounts:
+            - mountPath: /usr/share/elasticsearch/data
+              name: elasticsearch-data
+              subPath: data
     volumeClaimTemplates:
     - metadata:
         name: elasticsearch-data
       spec:
         accessModes:
           - ReadWriteOnce
-        storageClassName: {{ ES_DATA_DISK_TYPE }}-storage-class
+        storageClassName: pd-standard-expandable-storage-class
         resources:
           requests:
-            storage: {{ ES_DATA_DISK_SIZE }}
-{% if ES_LOADING_NUM_PODS > 0 %}
+            storage: 200Gi
   - name: data-loading-node
-    count: {{ ES_LOADING_NUM_PODS }}
+    count: 2
     config:
       node.master: false
       node.data: true
@@ -177,11 +183,13 @@ spec:
       cluster.routing.allocation.disk.watermark.low: "91%"
       cluster.routing.allocation.disk.watermark.high: "95%"
       cluster.routing.allocation.disk.watermark.flood_stage: "97%"
+      xpack.security.enabled: false
     podTemplate:
       metadata:
         labels:
           name: elasticsearch
-          deployment: {{ DEPLOY_TO }}
+          role: ingest
+          env: test
       spec:
         affinity:
           nodeAffinity:
@@ -189,9 +197,9 @@ spec:
               nodeSelectorTerms:
               - matchExpressions:
                 - key: nodeType
-                  operator: NotIn
+                  operator: In
                   values:
-                  - data
+                  - default
         initContainers:
           - name: sysctl
             securityContext:
@@ -199,34 +207,34 @@ spec:
             command: ['sh', '-c', 'sysctl -w vm.max_map_count=262144']
         containers:
         - name: elasticsearch
-          imagePullPolicy: {{ IMAGE_PULL_POLICY }}
+          imagePullPolicy: Always
     volumeClaimTemplates:
         - metadata:
             name: elasticsearch-data
           spec:
             accessModes:
               - ReadWriteOnce
-            storageClassName: standard
+            storageClassName: pd-standard-expandable-storage-class
             resources:
               requests:
-                storage: {{ ES_LOADING_DISK_SIZE }}
-{% endif %}
+                storage: 50Gi
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: elasticsearch-es-data-nodes
+  name: elasticsearch-es-http-ilb
+  labels:
+    name: elasticsearch-es-http-ilb
+    env: test
   annotations:
     cloud.google.com/load-balancer-type: "Internal"
 spec:
   type: LoadBalancer
-{% if ES_DATA_SERVICE_IP %}
-  loadBalancerIP: {{ ES_DATA_SERVICE_IP }}
-{% endif %}
+  loadBalancerIP: 10.152.0.6
   ports:
     - name: http
       port: 9200
       targetPort: 9200
   selector:
+    common.k8s.elastic.co/type: elasticsearch
     elasticsearch.k8s.elastic.co/cluster-name: elasticsearch
-    elasticsearch.k8s.elastic.co/node-data: "true"

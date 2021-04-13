@@ -1,4 +1,6 @@
-# MCRI Elasticsearch Deployment
+# MCRI Elasticsearch Deployment (**DEPRECATED**)
+
+**THIS DOCUMENT IS DEPRECATED** - See [README](../elasticsearch/README.md) for latest version.
 
 This directory contains instructions and all deployment descriptors required
 for deploying Seqr's Elasticsearch instance at MCRI, hosted on Google Kubernetes Engine.
