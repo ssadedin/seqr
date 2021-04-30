@@ -41,7 +41,7 @@ gcloud beta container \
   --default-max-pods-per-node "110" \
   --enable-autoscaling \
   --min-nodes "0" \
-  --max-nodes "5" \
+  --max-nodes "3" \
   --no-enable-master-authorized-networks \
   --addons HorizontalPodAutoscaling,HttpLoadBalancing,GcePersistentDiskCsiDriver,ConfigConnector \
   --enable-autoupgrade \
@@ -58,6 +58,7 @@ gcloud beta container \
   --workload-pool "mcri-01.svc.id.goog" \
   --enable-shielded-nodes \
   --tags "default" \
+  --autoscaling-profile optimize-utilization \
   --node-locations "$GCP_ZONE"
 ```
 
