@@ -8,6 +8,5 @@ WITH project_user AS (
 )
 SELECT *
 FROM project_user pu
---WHERE pu.email IN ('tommy.li@mcri.edu.au', 'cas.simons@mcri.edu.au')
 ORDER BY pu.project_guid, pu.email
 ;

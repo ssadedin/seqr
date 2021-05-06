@@ -13,8 +13,7 @@
 
     docker cp "$1" "$(docker-compose ps -q postgres)":/root/
 
-    # /usr/local/bin/docker-compose exec -T postgres psql -U postgres -P format=unaligned -P fieldsep=\, -f "/root/$(basename $1)" seqrdb | gzip -c > "$outfile"
-    /usr/local/bin/docker-compose exec -T postgres psql -U postgres --csv -f "/root/$(basename $1)" seqrdb | gzip -c > "$outfile"
+    /usr/local/bin/docker-compose exec -T postgres psql -U postgres --csv -f "/root/$(basename "$1")" seqrdb | gzip -c > "$outfile"
 
     cd "$(dirname "$outfile")"
 
