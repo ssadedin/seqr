@@ -21,3 +21,4 @@
 #
 # m h  dom mon dow   command
 0 * * * * /home/seqr/seqr/mcri_deploy/scripts/create_backup.sh
+0 * * * * /home/seqr/seqr/mcri_deploy/scripts/db_extract.sh "/home/seqr/seqr/mcri_deploy/scripts/users_extract_for_cas.sql" "/home/seqr/backups" users_for_cas
