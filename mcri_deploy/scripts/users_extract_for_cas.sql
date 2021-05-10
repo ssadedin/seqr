@@ -1,5 +1,5 @@
 WITH project_user AS (
-  SELECT DISTINCT sp.guid project_guid, sp.name project_name, au.username, 'password' "password", au.email
+  SELECT DISTINCT sp.guid project_guid, sp.name project_name, au.username, au.password, au.email
   FROM seqr_project sp
     JOIN auth_group ag on ag.id = sp.can_view_group_id
     JOIN auth_user_groups aug on ag.id = aug.group_id

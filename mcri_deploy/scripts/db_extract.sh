@@ -5,7 +5,8 @@
 
     datestamp=$(date +'%Y-%m-%d')
 
-    outfile="$2/$3_${datestamp}.csv.gz"
+    # outfile="$2/$3_${datestamp}.csv.gz"
+    outfile="$2/$3.csv.gz"
 
     echo "Creating extract: $datestamp"
 
