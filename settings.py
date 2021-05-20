@@ -254,6 +254,9 @@ SEQR_VERSION = 'v1.0'
 SEQR_PRIVACY_VERSION = float(os.environ.get('SEQR_PRIVACY_VERSION', 1.0))
 SEQR_TOS_VERSION = float(os.environ.get('SEQR_TOS_VERSION', 1.0))
 
+# See https://github.com/broadinstitute/seqr/issues/1863
+DATA_UPLOAD_MAX_MEMORY_SIZE = 5242880
+
 BASE_URL = os.environ.get("BASE_URL", "/")
 
 SLACK_TOKEN = os.environ.get("SLACK_TOKEN")
