@@ -74,7 +74,7 @@ GParsPool.withPool(threadCount) {
                 request.uri.path = "/$indexName/_search"
                 request.body = firstDocBySampleEsQueryBody
             }
-            Long docCount = respBody.hits.total
+            Long docCount = respBody.hits.total.value
             def pages = getPages(docCount, pageSize)
             println "Found $docCount documents for sample $sampleId, splitting into pages=$pages"
 
@@ -177,6 +177,7 @@ static String getBySampleQuery(String sampleId, Long pageSize) {
           ]
         }
       },
+      "track_total_hits": true
     }
     """
 
