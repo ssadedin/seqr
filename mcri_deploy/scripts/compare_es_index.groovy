@@ -2,11 +2,13 @@
  * @GrabConfig (systemClassLoader =true)
  */
 
+
 import groovy.json.JsonSlurper
 import groovy.transform.Field
 import groovyx.net.http.FromServer
 import picocli.CommandLine
 
+import static groovyx.net.http.ContentTypes.JSON
 @Grab('info.picocli:picocli-groovy')
 @Grab('io.github.http-builder-ng:http-builder-ng-core')
 @picocli.groovy.PicocliScript
@@ -49,76 +51,98 @@ import static groovyx.net.http.HttpBuilder.configure
 @CommandLine.Option(arity = '1', names = ['-n', '--docCount'], defaultValue = '1000', description = 'number of documents to compare')
 @Field Integer docCount
 
-def projectIndices = ["${sourceIndex}": "${targetIndex}"]
+def projectIndices = [("${sourceIndex}".toString()): "${targetIndex}"]
 
-def ES_QUERY = """
-{    
-    "_source": {
-        "exclude": ["_index", "_type"]
-    },
-    "query": {
-        "match_all": {}
-    },
-    "track_total_hits": true,
-    "from": 0,
-    "size": $docCount,
-    "sort": {
-      "variantId": "asc"
-    }
-}
-"""
-
-projectIndices.each { source, target ->
-    println "Comparing sourceIndex=$source to targetIndex=$target"
-
-    def body = new JsonSlurper().parseText(ES_QUERY)
-
-    def sourceResult = configure {
-        request.auth.basic sourceEsUsername, sourceEsPassword
-        request.uri = sourceEsUrl
-        request.contentType = JSON[0]
-    }.get {
-        request.uri.path = "/$source/_search"
-        request.body = body
-        response.failure { FromServer fs, def respBody ->
-            println "Not found in sourceIndex, skipping... sourceIndex=$source, statusCode=${fs.statusCode}, message=${fs.message}"
+['asc', 'desc'].each { String indexSortOrder ->
+    def ES_QUERY = """
+    {    
+        "_source": {
+            "exclude": ["_index", "_type"]
+        },
+        "query": {
+            "match_all": {}
+        },
+        "track_total_hits": true,
+        "from": 0,
+        "size": $docCount,
+        "sort": {
+          "variantId": "$indexSortOrder"
         }
     }
+    """
 
-    if (sourceResult) {
-        Long sourceDocCount = sourceResult.hits.total.value
-        def sourceDocSources = sourceResult.hits.hits._source
+    projectIndices.each { source, target ->
+        println "Comparing first $docCount documents in $indexSortOrder order, sourceIndex=$source to targetIndex=$target"
 
-        def targetResult = configure {
-            request.auth.basic targetEsUsername, targetEsPassword
-            request.uri = targetEsUrl
+        def body = new JsonSlurper().parseText(ES_QUERY)
+
+        def sourceResult = configure {
+            request.auth.basic sourceEsUsername, sourceEsPassword
+            request.uri = sourceEsUrl
             request.contentType = JSON[0]
         }.get {
-            request.uri.path = "/$target/_search"
+            request.uri.path = "/$source/_search"
             request.body = body
             response.failure { FromServer fs, def respBody ->
-                println "ERROR: Elasticsearch targetIndex=$target found in source but not in target."
+                println "Not found in sourceIndex, skipping... sourceIndex=$source, statusCode=${fs.statusCode}, message=${fs.message}"
             }
         }
 
-        if (targetResult) {
-            Long targetDocCount = targetResult.hits.total.value
-            def targetDocSources = targetResult.hits.hits._source
+        if (sourceResult) {
+            Long sourceDocCount = sourceResult.hits.total.value
+            def sourceDocSources = sourceResult.hits.hits._source
 
-            assert sourceDocCount == targetDocCount
+            def targetResult = configure {
+                request.auth.basic targetEsUsername, targetEsPassword
+                request.uri = targetEsUrl
+                request.contentType = JSON[0]
+            }.get {
+                request.uri.path = "/$target/_search"
+                request.body = body
+                response.failure { FromServer fs, def respBody ->
+                    println "ERROR: Elasticsearch targetIndex=$target found in source but not in target."
+                }
+            }
 
-            sourceDocSources.eachWithIndex { sourceDoc, docIdx ->
-                println "Comparing sourceDoc[$docIdx]"
-                sourceDoc.keySet().each { k ->
-                    def sourceDocProp = sourceDoc[k]
-                    def targetDocProp = targetDocSources[docIdx][k]
+            if (targetResult) {
+                Long targetDocCount = targetResult.hits.total.value
+                def targetDocSources = targetResult.hits.hits._source
 
-                    if (k in ['mainTranscript_hgvs', 'mainTranscript_hgvsc', 'mainTranscript_protein_id', 'mainTranscript_gene_id', 'mainTranscript_gene_symbol', 'mainTranscript_cdna_start', 'mainTranscript_cdna_end', 'mainTranscript_transcript_id', 'sortedTranscriptConsequences']) {
-                        return
-                    } else if (sourceDocProp instanceof Collection) {
-                        assert sourceDocProp?.sort(false) == targetDocProp?.sort(false), "$k not equal"
+                assert sourceDocCount == targetDocCount
+
+                sourceDocSources.eachWithIndex { sourceDoc, docIdx ->
+                    String docId = sourceDoc.docId
+                    def targetDocs = targetDocSources.findAll { it.docId == docId }
+                    if (targetDocs.size() == 1) {
+                        def targetDoc = targetDocs[0]
+//                        println "Comparing variant=${docId}"
+                        sourceDoc.keySet().each { k ->
+                            def sourceDocProp = sourceDoc[k]
+                            def targetDocProp = targetDoc[k]
+
+                            // Need to confirm logic on how main transcript is decided, skip for now
+                            if (!(k in ['mainTranscript_hgvs', 'mainTranscript_hgvsc', 'mainTranscript_hgvsp', 'mainTranscript_protein_id', 'mainTranscript_gene_id', 'mainTranscript_gene_symbol', 'mainTranscript_cdna_start', 'mainTranscript_cdna_end', 'mainTranscript_transcript_id', 'sortedTranscriptConsequences', 'mainTranscript_polyphen_prediction'])) {
+                                if (sourceDocProp instanceof Collection) {
+                                    assert sourceDocProp?.sort(false) == targetDocProp?.sort(false), "$docId, $k not equal"
+                                } else {
+                                    assert sourceDocProp == targetDocProp, "$docId, $k not equal"
+                                }
+                            } else if (k == 'sortedTranscriptConsequences') {
+                                // fuzzy equals check on sortedTranscriptConsequences
+                                assert sourceDocProp.every { s ->
+                                    targetDocProp.any { t ->
+                                        s.transcript_id == t.transcript_id
+                                                && s.major_consequence == t.major_consequence
+                                                && s.hgvsc == t.hgvsc
+                                                && s.protein_id == t.protein_id
+                                                && s.major_consequence_rank == t.major_consequence_rank
+                                    }
+                                }, "$docId, $k not equal"
+                                assert (sourceDocProp?.size() ?: 0) == (targetDocProp?.size() ?: 0), "$docId, $k not equal"
+                            }
+                        }
                     } else {
-                        assert sourceDocProp == targetDocProp, "$k not equal"
+                        println "Found more than one target docs for variant=${docId}"
                     }
                 }
             }
