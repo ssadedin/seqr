@@ -24,16 +24,16 @@ gcloud beta container \
   --project "mcri-01" clusters create "$CLUSTER_NAME" \
   --zone "$GCP_ZONE" \
   --no-enable-basic-auth \
-  --cluster-version "1.18.16-gke.502" \
+  --cluster-version "1.19.9-gke.1400" \
   --release-channel "regular" \
   --machine-type "e2-highmem-2" \
   --image-type "COS_CONTAINERD" \
   --disk-type "pd-standard" \
-  --disk-size "10" \
+  --disk-size "100" \
   --node-labels "env=$ENV_LABEL,nodeType=default" \
   --metadata disable-legacy-endpoints=true \
   --scopes "https://www.googleapis.com/auth/devstorage.read_only","https://www.googleapis.com/auth/logging.write","https://www.googleapis.com/auth/monitoring","https://www.googleapis.com/auth/servicecontrol","https://www.googleapis.com/auth/service.management.readonly","https://www.googleapis.com/auth/trace.append" \
-  --num-nodes "3" \
+  --num-nodes "4" \
   --enable-stackdriver-kubernetes \
   --enable-ip-alias \
   --network "projects/mcri-01/global/networks/default" \
@@ -41,7 +41,7 @@ gcloud beta container \
   --default-max-pods-per-node "110" \
   --enable-autoscaling \
   --min-nodes "0" \
-  --max-nodes "3" \
+  --max-nodes "4" \
   --no-enable-master-authorized-networks \
   --addons HorizontalPodAutoscaling,HttpLoadBalancing,GcePersistentDiskCsiDriver,ConfigConnector \
   --enable-autoupgrade \
