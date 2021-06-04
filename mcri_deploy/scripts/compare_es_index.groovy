@@ -121,7 +121,7 @@ def projectIndices = [("${sourceIndex}".toString()): "${targetIndex}"]
                             def targetDocProp = targetDoc[k]
 
                             // Need to confirm logic on how main transcript is decided, skip for now
-                            if (!(k in ['mainTranscript_hgvs', 'mainTranscript_hgvsc', 'mainTranscript_hgvsp', 'mainTranscript_protein_id', 'mainTranscript_gene_id', 'mainTranscript_gene_symbol', 'mainTranscript_cdna_start', 'mainTranscript_cdna_end', 'mainTranscript_transcript_id', 'sortedTranscriptConsequences', 'mainTranscript_polyphen_prediction'])) {
+                            if (!(k in ['mainTranscript_hgvs', 'mainTranscript_hgvsc', 'mainTranscript_hgvsp', 'mainTranscript_protein_id', 'mainTranscript_gene_id', 'mainTranscript_gene_symbol', 'mainTranscript_cdna_start', 'mainTranscript_cdna_end', 'mainTranscript_transcript_id', 'sortedTranscriptConsequences', 'mainTranscript_polyphen_prediction', 'mainTranscript_biotype'])) {
                                 if (sourceDocProp instanceof Collection) {
                                     assert sourceDocProp?.sort(false) == targetDocProp?.sort(false), "$docId, $k not equal"
                                 } else {
