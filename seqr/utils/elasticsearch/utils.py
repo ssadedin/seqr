@@ -6,7 +6,7 @@ import logging
 from settings import ELASTICSEARCH_SERVICE_HOSTNAME, ELASTICSEARCH_SERVICE_PORT, ELASTICSEARCH_CREDENTIALS, ELASTICSEARCH_PROTOCOL, ES_SSL_CONTEXT
 from seqr.models import Sample
 from seqr.utils.redis_utils import safe_redis_get_json, safe_redis_set_json
-from seqr.utils.elasticsearch.constants import XPOS_SORT_KEY
+from seqr.utils.elasticsearch.constants import XPOS_SORT_KEY, MAX_VARIANTS
 from seqr.utils.elasticsearch.es_gene_agg_search import EsGeneAggSearch
 from seqr.utils.elasticsearch.es_search import EsSearch
 from seqr.utils.gene_utils import parse_locus_list_items
@@ -88,13 +88,17 @@ def get_es_variants_for_variant_tuples(families, xpos_ref_alt_tuples):
     return get_es_variants_for_variant_ids(families, variant_ids, dataset_type=Sample.DATASET_TYPE_VARIANT_CALLS)
 
 
-def get_es_variants(search_model, es_search_cls=EsSearch, sort=XPOS_SORT_KEY, **kwargs):
+def get_es_variants(search_model, es_search_cls=EsSearch, sort=XPOS_SORT_KEY, skip_genotype_filter=False, load_all=False, **kwargs):
     cache_key = 'search_results__{}__{}'.format(search_model.guid, sort or XPOS_SORT_KEY)
     previous_search_results = safe_redis_get_json(cache_key) or {}
+    total_results = previous_search_results.get('total_results')
 
-    previously_loaded_results, search_kwargs = es_search_cls.process_previous_results(previous_search_results,  **kwargs)
+    previously_loaded_results, search_kwargs = es_search_cls.process_previous_results(previous_search_results, load_all=load_all, **kwargs)
     if previously_loaded_results is not None:
         return previously_loaded_results, previous_search_results.get('total_results')
+
+    if load_all and total_results and int(total_results) >= int(MAX_VARIANTS):
+        raise InvalidSearchException('Too many variants to load. Please refine your search and try again')
 
     search = search_model.variant_search.search
 
@@ -108,7 +112,7 @@ def get_es_variants(search_model, es_search_cls=EsSearch, sort=XPOS_SORT_KEY, **
     es_search = es_search_cls(
         search_model.families.all(),
         previous_search_results=previous_search_results,
-        skip_unaffected_families=search.get('inheritance'),
+        inheritance_search=search.get('inheritance'),
     )
 
     if search.get('customQuery'):
@@ -133,7 +137,7 @@ def get_es_variants(search_model, es_search_cls=EsSearch, sort=XPOS_SORT_KEY, **
     es_search.filter_by_annotation_and_genotype(
         search.get('inheritance'), quality_filter=search.get('qualityFilter'),
         annotations=search.get('annotations'), annotations_secondary=search.get('annotations_secondary'),
-        pathogenicity=search.get('pathogenicity'))
+        pathogenicity=search.get('pathogenicity'), skip_genotype_filter=skip_genotype_filter)
 
     if hasattr(es_search, 'aggregate_by_gene'):
         es_search.aggregate_by_gene()
@@ -142,7 +146,7 @@ def get_es_variants(search_model, es_search_cls=EsSearch, sort=XPOS_SORT_KEY, **
 
     safe_redis_set_json(cache_key, es_search.previous_search_results, expire=timedelta(weeks=2))
 
-    return variant_results, es_search.previous_search_results['total_results']
+    return variant_results, es_search.previous_search_results.get('total_results')
 
 
 def get_es_variant_gene_counts(search_model):

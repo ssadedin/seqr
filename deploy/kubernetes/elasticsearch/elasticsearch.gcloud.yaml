@@ -18,6 +18,10 @@ spec:
     tls:
       selfSignedCertificate:
         disabled: true
+  {% if ES_CONFIGURE_SNAPSHOTS %}
+  secureSettings:
+    - secretName: es-snapshot-gcs-secrets
+  {% endif %}
   nodeSets:
   - name: master-node
     count: {{ ES_MASTER_NUM_PODS }}
@@ -27,6 +31,9 @@ spec:
       node.ingest: false
       node.ml: false
       node.remote_cluster_client: false
+      cluster.routing.allocation.disk.watermark.low: "91%"
+      cluster.routing.allocation.disk.watermark.high: "95%"
+      cluster.routing.allocation.disk.watermark.flood_stage: "97%"
     podTemplate:
       metadata:
         labels:
@@ -68,6 +75,9 @@ spec:
       node.ingest: false
       node.ml: false
       node.remote_cluster_client: false
+      cluster.routing.allocation.disk.watermark.low: "91%"
+      cluster.routing.allocation.disk.watermark.high: "95%"
+      cluster.routing.allocation.disk.watermark.flood_stage: "97%"
     podTemplate:
       metadata:
         labels:
@@ -109,7 +119,10 @@ spec:
       node.ingest: false
       node.ml: false
       node.remote_cluster_client: false
-      cluster.routing.allocation.disk.watermark.low: '90%'
+      cluster.routing.allocation.disk.watermark.low: "91%"
+      cluster.routing.allocation.disk.watermark.high: "95%"
+      cluster.routing.allocation.disk.watermark.flood_stage: "97%"
+      cluster.routing.allocation.total_shards_per_node: {{ ELASTICSEARCH_MAX_SHARDS_PER_NODE }}
     podTemplate:
       metadata:
         labels:
@@ -162,6 +175,9 @@ spec:
       node.ingest: true
       node.ml: false
       node.remote_cluster_client: false
+      cluster.routing.allocation.disk.watermark.low: "91%"
+      cluster.routing.allocation.disk.watermark.high: "95%"
+      cluster.routing.allocation.disk.watermark.flood_stage: "97%"
     podTemplate:
       metadata:
         labels:

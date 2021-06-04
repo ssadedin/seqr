@@ -3,6 +3,7 @@ import json
 import os
 import random
 import string
+import subprocess
 
 from ssl import create_default_context
 
@@ -53,6 +54,7 @@ MIDDLEWARE = [
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.middleware.common.CommonMiddleware',
+    'csp.middleware.CSPMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -64,7 +66,16 @@ ALLOWED_HOSTS = ['*']
 
 CSRF_COOKIE_NAME = 'csrf_token'
 CSRF_COOKIE_HTTPONLY = False
+SESSION_COOKIE_AGE = 86400 # seconds in 1 day
 X_FRAME_OPTIONS = 'SAMEORIGIN'
+
+CSP_INCLUDE_NONCE_IN = ['script-src', 'style-src-elem']
+CSP_FONT_SRC = ('https://fonts.gstatic.com', 'data:')
+CSP_CONNECT_SRC = ("'self'", 'https://gtexportal.org', 'https://storage.googleapis.com') # used by IGV
+CSP_SCRIPT_SRC = ("'self'", "'unsafe-eval'")
+# IGV js injects CSS into the page head so there is no way to set nonce. Therefore, support hashed value of the CSS
+IGV_CSS_HASH = "'sha256-D1ouVPg7bXVEm/f4h9NNmEBwWO5vkjlDOIHPeV3tFPg='"
+CSP_STYLE_SRC_ELEM = ('https://fonts.googleapis.com', "'self'", IGV_CSS_HASH)
 
 # django-debug-toolbar settings
 ENABLE_DJANGO_DEBUG_TOOLBAR = False
@@ -74,16 +85,16 @@ if ENABLE_DJANGO_DEBUG_TOOLBAR:
     INTERNAL_IPS = ['127.0.0.1']
     SHOW_COLLAPSED = True
     DEBUG_TOOLBAR_PANELS = [
-        'ddt_request_history.panels.request_history.RequestHistoryPanel',
+        'debug_toolbar.panels.history.HistoryPanel',
         'debug_toolbar.panels.timer.TimerPanel',
         'debug_toolbar.panels.settings.SettingsPanel',
         'debug_toolbar.panels.headers.HeadersPanel',
         'debug_toolbar.panels.request.RequestPanel',
-        'debug_toolbar.panels.profiling.ProfilingPanel',
         'debug_toolbar.panels.sql.SQLPanel',
         'debug_toolbar.panels.staticfiles.StaticFilesPanel',
         'debug_toolbar.panels.logging.LoggingPanel',
         'debug_toolbar.panels.redirects.RedirectsPanel',
+        'debug_toolbar.panels.profiling.ProfilingPanel',
     ]
     DEBUG_TOOLBAR_CONFIG = {
         'RESULTS_CACHE_SIZE': 100,
@@ -100,7 +111,8 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.10/howto/static-files/
 STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'ui/dist')
+STATICFILES_DIRS = ['ui/dist']
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 STATICFILES_FINDERS = (
     'django.contrib.staticfiles.finders.FileSystemFinder',
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
@@ -180,17 +192,16 @@ AUTHENTICATION_BACKENDS = (
 )
 
 # set the secret key
-SECRET_FILE = os.path.join(BASE_DIR, 'django_key')
-try:
-    SECRET_KEY = open(SECRET_FILE).read().strip()
-except IOError:
+SECRET_KEY = os.environ.get('DJANGO_KEY')
+if not SECRET_KEY:
+    SECRET_FILE = os.path.join(BASE_DIR, 'django_key')
     try:
+        with open(SECRET_FILE) as f:
+            SECRET_KEY = f.read().strip()
+    except IOError:
         SECRET_KEY = ''.join(random.SystemRandom().choice(string.printable) for i in range(50))
         with open(SECRET_FILE, 'w') as f:
             f.write(SECRET_KEY)
-    except IOError as e:
-        logger.warning('Unable to generate {}: {}'.format(os.path.abspath(SECRET_FILE), e))
-        SECRET_KEY = os.environ.get("DJANGO_KEY", "-placeholder-key-")
 
 ROOT_URLCONF = 'seqr.urls'
 
@@ -202,7 +213,7 @@ POSTGRES_DB_CONFIG = {
     'HOST': os.environ.get('POSTGRES_SERVICE_HOSTNAME', 'localhost'),
     'PORT': int(os.environ.get('POSTGRES_SERVICE_PORT', '5432')),
     'USER': os.environ.get('POSTGRES_USERNAME', 'postgres'),
-    'PASSWORD': os.environ.get('POSTGRES_PASSWORD', ''),
+    'PASSWORD': os.environ.get('POSTGRES_PASSWORD', 'pgtest'),
 }
 DATABASES = {
     'default': dict(NAME='seqrdb', **POSTGRES_DB_CONFIG),
@@ -222,7 +233,8 @@ ANYMAIL = {
     "POSTMARK_SERVER_TOKEN": os.environ.get('POSTMARK_SERVER_TOKEN', 'postmark-server-token-placeholder'),
 }
 
-if os.environ.get('DEPLOYMENT_TYPE') in {'prod', 'dev'}:
+DEPLOYMENT_TYPE = os.environ.get('DEPLOYMENT_TYPE')
+if DEPLOYMENT_TYPE in {'prod', 'dev'}:
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
     DEBUG = False
@@ -235,8 +247,8 @@ else:
         'http://localhost:3000',
         'http://localhost:8000',
     )
-    STATICFILES_DIRS = [STATIC_ROOT]
-    STATIC_ROOT = None
+    # STATICFILES_DIRS.append(STATIC_ROOT)
+    # STATIC_ROOT = None
     CORS_ALLOW_CREDENTIALS = True
     CORS_REPLACE_HTTPS_REFERER = True
     # django-hijack plugin
@@ -249,8 +261,8 @@ else:
 #########################################################
 
 SEQR_VERSION = 'v1.0'
-SEQR_PRIVACY_VERSION = 1.0
-SEQR_TOS_VERSION = 1.0
+SEQR_PRIVACY_VERSION = float(os.environ.get('SEQR_PRIVACY_VERSION', 1.0))
+SEQR_TOS_VERSION = float(os.environ.get('SEQR_TOS_VERSION', 1.1))
 
 BASE_URL = os.environ.get("BASE_URL", "/")
 
@@ -260,10 +272,12 @@ AIRTABLE_URL = 'https://api.airtable.com/v0/app3Y97xtbbaOopVR'
 AIRTABLE_API_KEY = os.environ.get("AIRTABLE_API_KEY")
 
 API_LOGIN_REQUIRED_URL = '/api/login-required-error'
+API_POLICY_REQUIRED_URL = '/api/policy-required-error'
+GOOGLE_LOGIN_REQUIRED_URL = '/login/google-oauth2'
 
-ANALYST_PROJECT_CATEGORY = 'analyst-projects'
-ANALYST_USER_GROUP = 'analysts'
-PM_USER_GROUP = 'project-managers'
+ANALYST_PROJECT_CATEGORY = os.environ.get('ANALYST_PROJECT_CATEGORY')
+ANALYST_USER_GROUP = os.environ.get('ANALYST_USER_GROUP')
+PM_USER_GROUP = os.environ.get('PM_USER_GROUP')
 
 # External service settings
 ELASTICSEARCH_SERVICE_HOSTNAME = os.environ.get('ELASTICSEARCH_SERVICE_HOSTNAME', 'localhost')
@@ -311,6 +325,8 @@ MME_SLACK_ALERT_NOTIFICATION_CHANNEL = 'matchmaker_alerts'
 MME_SLACK_MATCH_NOTIFICATION_CHANNEL = 'matchmaker_matches'
 MME_SLACK_SEQR_MATCH_NOTIFICATION_CHANNEL = 'matchmaker_seqr_match'
 
+SEQR_SLACK_DATA_ALERTS_NOTIFICATION_CHANNEL = 'seqr-data-loading'
+
 #########################################################
 #  Social auth specific settings
 #########################################################
@@ -318,9 +334,10 @@ SOCIAL_AUTH_GOOGLE_OAUTH2_IGNORE_DEFAULT_SCOPE = True
 SOCIAL_AUTH_GOOGLE_OAUTH2_SCOPE = [
     'https://www.googleapis.com/auth/userinfo.profile',
     'https://www.googleapis.com/auth/userinfo.email',
-    'https://www.googleapis.com/auth/cloud-billing',
     'openid'
 ]
+
+SOCIAL_AUTH_PROVIDER = 'google-oauth2'
 
 # Use Google sub ID as the user ID, safer than using email
 USE_UNIQUE_USER_ID = True
@@ -328,10 +345,11 @@ USE_UNIQUE_USER_ID = True
 SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = os.environ.get('SOCIAL_AUTH_GOOGLE_OAUTH2_CLIENT_ID')
 SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = os.environ.get('SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET')
 
+
 SOCIAL_AUTH_POSTGRES_JSONFIELD = True
 SOCIAL_AUTH_URL_NAMESPACE = 'social'
 SOCIAL_AUTH_LOGIN_REDIRECT_URL = '/'
-SOCIAL_AUTH_REDIRECT_IS_HTTPS = False
+SOCIAL_AUTH_REDIRECT_IS_HTTPS = not DEBUG
 
 SOCIAL_AUTH_PIPELINE_BASE = (
     'social_core.pipeline.social_auth.social_details',
@@ -343,9 +361,20 @@ SOCIAL_AUTH_PIPELINE_USER_EXIST = ('seqr.utils.social_auth_pipeline.validate_use
 SOCIAL_AUTH_PIPELINE_ASSOCIATE_USER = ('social_core.pipeline.social_auth.associate_user',)
 SOCIAL_AUTH_PIPELINE_LOG = ('seqr.utils.social_auth_pipeline.log_signed_in',)
 
+TERRA_PERMS_CACHE_EXPIRE_SECONDS = os.environ.get('TERRA_PERMS_CACHE_EXPIRE_SECONDS', 60)
+TERRA_WORKSPACE_CACHE_EXPIRE_SECONDS = os.environ.get('TERRA_WORKSPACE_CACHE_EXPIRE_SECONDS', 300)
+
+SERVICE_ACCOUNT_FOR_ANVIL = None
+
 if TERRA_API_ROOT_URL:
+    SERVICE_ACCOUNT_FOR_ANVIL = subprocess.run(['gcloud auth list --filter=status:ACTIVE --format="value(account)"'],
+                                               capture_output=True, text=True, shell=True).stdout.split('\n')[0]
+    if not SERVICE_ACCOUNT_FOR_ANVIL:
+        raise Exception('Error starting seqr - gcloud auth is not properly configured')
+
     SOCIAL_AUTH_GOOGLE_OAUTH2_AUTH_EXTRA_ARGUMENTS = {
         'access_type': 'offline',  # to make the access_token can be refreshed after expired (expiration time is 1 hour)
+        'approval_prompt': 'auto', # required for successful token refresh
     }
 
     SOCIAL_AUTH_PIPELINE = ('seqr.utils.social_auth_pipeline.validate_anvil_registration',) + \

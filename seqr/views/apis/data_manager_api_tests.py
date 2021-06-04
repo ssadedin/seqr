@@ -25,12 +25,21 @@ ES_CAT_ALLOCATION=[{
      'disk.percent': None
      }]
 
+ES_CAT_NODES=[{
+    'name': 'node-1',
+    'heap.percent': '57',
+},
+    {'name': 'no-disk-node',
+     'heap.percent': '83',
+     }]
+
 EXPECTED_DISK_ALLOCATION = [{
     'node': 'node-1',
     'shards': '113',
     'diskUsed': '67.2gb',
     'diskAvail': '188.6gb',
-    'diskPercent': '26'
+    'diskPercent': '26',
+    'heapPercent': '57',
 },
     {'node': 'UNASSIGNED',
      'shards': '2',
@@ -253,6 +262,8 @@ class DataManagerAPITest(AuthenticationTestCase):
         urllib3_responses.add_json(
             '/_cat/allocation?format=json&h=node,shards,disk.avail,disk.used,disk.percent', ES_CAT_ALLOCATION)
         urllib3_responses.add_json(
+            '/_cat/nodes?format=json&h=name,heap.percent', ES_CAT_NODES)
+        urllib3_responses.add_json(
            '/_cat/indices?format=json&h=index,docs.count,store.size,creation.date.string', ES_CAT_INDICES)
         urllib3_responses.add_json('/_cat/aliases?format=json&h=alias,index', ES_CAT_ALIAS)
         urllib3_responses.add_json('/_all/_mapping', ES_INDEX_MAPPING)
@@ -400,7 +411,7 @@ class DataManagerAPITest(AuthenticationTestCase):
         self.assertEqual(response.get('x-test-header'), 'test')
         self.assertIsNone(response.get('keep-alive'))
 
-        data = json.dumps({'content': 'Test Body'})
+        data = json.dumps([{'content': 'Test Body'}])
         response = self.client.post(url, content_type='application/json', data=data)
         self.assertEqual(response.status_code, 201)
 
@@ -415,7 +426,7 @@ class DataManagerAPITest(AuthenticationTestCase):
         self.assertEqual(post_request.headers['Host'], 'localhost:5601')
         self.assertEqual(get_request.headers['Authorization'], 'Basic a2liYW5hOmFiYzEyMw==')
         self.assertEqual(post_request.headers['Content-Type'], 'application/json')
-        self.assertEqual(post_request.headers['Content-Length'], '24')
+        self.assertEqual(post_request.headers['Content-Length'], '26')
         self.assertEqual(post_request.body, data.encode('utf-8'))
 
         # Test with error response
