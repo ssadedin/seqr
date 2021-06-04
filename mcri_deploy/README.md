@@ -41,7 +41,7 @@ docker-compose --verbose \
 # After build successful, tag Git repo and Docker repo
 # MCRI Seqr follows CalVer, change number after _ (underscore) if deploying multiple times
 # on the same day.
-export SEQR_VERSION="v$(date +"%Y.%m.%d")_02"
+export SEQR_VERSION="v$(date +"%Y.%m.%d")_00"
 git tag -a "${SEQR_VERSION}" -m "MCRI seqr version ${SEQR_VERSION}"
 export SEQR_IMAGE_TAG="${SEQR_VERSION}"
 export SEQR_LONG_GIT_TAG=$(git describe --long)
